@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Juan Manuel Gimeno" />
+  <title>Typclassopedia (or the long path to lenses)</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <link rel="stylesheet" type="text/css" media="screen, projection, print"
+    href="http://www.w3.org/Talks/Tools/Slidy2/styles/slidy.css" />
+  <script src="http://www.w3.org/Talks/Tools/Slidy2/scripts/slidy.js"
+    charset="utf-8" type="text/javascript"></script>
+</head>
+<body>
+<div class="slide titlepage">
+  <h1 class="title">Typclassopedia (or the long path to lenses)</h1>
+  <p class="author">
+Juan Manuel Gimeno
+  </p>
+  <p class="date">someday</p>
+</div>
+<div id="index" class="slide section level1">
+<h1>Index</h1>
+<ul>
+<li>Typeclasses and instances</li>
+<li>Monoid</li>
+<li>Foldable</li>
+<li>Functor</li>
+<li>Applicative Functor</li>
+<li>Traversable</li>
+<li>Monad</li>
+</ul>
+<div style="display: none;">
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">import </span><span class="dt">Prelude</span> <span class="kw">hiding</span> (<span class="dt">Eq</span>(..)
+                      ,<span class="dt">Functor</span>(<span class="fu">..</span>)
+                      ,<span class="dt">Monoid</span>(<span class="fu">..</span>)
+                      )</code></pre></div>
+</div>
+</div>
+<div id="typeclasses-and-instances" class="slide section level1">
+<h1>Typeclasses and instances</h1>
+<ul>
+<li>Typeclasses group types
+<ul>
+<li>Members of the class are the types not the values</li>
+</ul></li>
+<li>A typeclass defines names and signatures for functions common for all types in the class</li>
+<li>Sometimes default implementations for some of them</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Eq</span> a <span class="kw">where</span>
+<span class="ot">  (==) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>
+<span class="ot">  (/=) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>
+  x <span class="fu">/=</span> y <span class="fu">=</span> not (x <span class="fu">==</span> y)
+  x <span class="fu">==</span> y <span class="fu">=</span> not (x <span class="fu">/=</span> y)</code></pre></div>
+<ul>
+<li>Instances give the implementation for types</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> <span class="dt">Eq</span> [a] <span class="kw">where</span>
+  []     <span class="fu">==</span> []     <span class="fu">=</span> <span class="dt">True</span> 
+  _      <span class="fu">==</span> []     <span class="fu">=</span> <span class="dt">False</span>
+  []     <span class="fu">==</span> _      <span class="fu">=</span> <span class="dt">False</span>
+  (a<span class="fu">:</span>as) <span class="fu">==</span> (b<span class="fu">:</span>bs) <span class="fu">=</span> (a <span class="fu">==</span> b) <span class="fu">&amp;&amp;</span> (as <span class="fu">==</span> bs)</code></pre></div>
+</div>
+<div id="typeclasses" class="slide section level1">
+<h1>Typeclasses</h1>
+<div class="figure">
+<img src="Typeclassopedia-diagram.png" alt="(Typeclasses described in the Typeclassopedia)" style="width:80.0%" />
+<p class="caption">(Typeclasses described in the Typeclassopedia)</p>
+</div>
+</div>
+<div id="functor" class="slide section level1">
+<h1>Functor</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="kw">where</span>
+<span class="ot">  fmap ::</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
+<ul>
+<li>fmap lifts a function from the <em>&quot;normal world&quot;</em> to the <em>&quot;<code>f</code> world&quot;</em> (the <strong>context</strong> defined by the functor)</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="co">-- Data.Functor / Control.Applicative</span>
+(<span class="fu">&lt;$&gt;</span>) <span class="fu">=</span> fmap</code></pre></div>
+<h2 id="laws">Laws</h2>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmap id      <span class="fu">=</span> id
+fmap (f <span class="fu">.</span> g) <span class="fu">=</span> fmap f <span class="fu">.</span> fmap g</code></pre></div>
+<ul>
+<li><p>These laws ensure that <code>fmap g</code> <strong>does not change the structure</strong> of a container, only the elements.</p></li>
+<li><p>Equivalently, and more simply, they ensure that <code>fmap g</code> changes a value without altering its contex.</p></li>
+</ul>
+</div>
+<div id="functor-1" class="slide section level1">
+<h1>Functor</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> [] <span class="kw">where</span>
+  fmap <span class="fu">=</span> map</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Maybe</span> <span class="kw">where</span>
+  fmap _ <span class="dt">Nothing</span>  <span class="fu">=</span> <span class="dt">Nothing</span>
+  fmap f (<span class="dt">Just</span> a) <span class="fu">=</span> <span class="dt">Just</span> (f a)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Either</span> a <span class="kw">where</span>
+  fmap _ (<span class="dt">Left</span> a)  <span class="fu">=</span> <span class="dt">Left</span> a
+  fmap f (<span class="dt">Right</span> b) <span class="fu">=</span> <span class="dt">Right</span> (f b)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- writer</span>
+<span class="kw">instance</span> <span class="dt">Functor</span> ((,) a) <span class="kw">where</span>
+  fmap f (a, x) <span class="fu">=</span> (a, f x)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- reader</span>
+<span class="kw">instance</span> <span class="dt">Functor</span> ((<span class="ot">-&gt;</span>) a) <span class="kw">where</span>
+  fmap <span class="fu">=</span> (<span class="fu">.</span>)</code></pre></div>
+</div>
+<div id="functor-2" class="slide section level1">
+<h1>Functor</h1>
+<ul>
+<li>More important than you think :-D</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- Data.Functor.Identity </span>
+<span class="kw">newtype</span> <span class="dt">Identity</span> a <span class="fu">=</span> <span class="dt">Identity</span> {<span class="ot"> runIdentity ::</span> a }
+
+<span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Identity</span> <span class="kw">where</span>
+  fmap f (<span class="dt">Identity</span> a) <span class="fu">=</span> <span class="dt">Identity</span> (f a)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- Data.Functor.Const</span>
+<span class="kw">newtype</span> <span class="dt">Const</span> a b <span class="fu">=</span> <span class="dt">Const</span> {<span class="ot"> getConst ::</span> a }
+
+<span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">Const</span> a) <span class="kw">where</span>
+  fmap _ (<span class="dt">Const</span> a) <span class="fu">=</span> <span class="dt">Const</span> a</code></pre></div>
+</div>
+<div id="monoid" class="slide section level1">
+<h1>Monoid</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Monoid</span> a <span class="kw">where</span>
+<span class="ot">   mempty  ::</span> a
+<span class="ot">   mappend ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a
+
+<span class="ot">   mconcat ::</span> [a] <span class="ot">-&gt;</span> a
+   mconcat <span class="fu">=</span> foldr mappend mempty</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="co">-- Data.Monoid</span>
+(<span class="fu">&lt;&gt;</span>) <span class="fu">=</span> mappend </code></pre></div>
+<h2 id="laws-1">Laws</h2>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">(x <span class="fu">&lt;&gt;</span> y) <span class="fu">&lt;&gt;</span> z <span class="fu">=</span> x <span class="fu">&lt;&gt;</span> (y <span class="fu">&lt;&gt;</span> z) <span class="co">-- associativity</span>
+mempty <span class="fu">&lt;&gt;</span> x <span class="fu">=</span> x               <span class="co">-- left identity</span>
+x <span class="fu">&lt;&gt;</span> mempty <span class="fu">=</span> x               <span class="co">-- right identity</span></code></pre></div>
+</div>
+<div id="monoid-1" class="slide section level1">
+<h1>Monoid</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Monoid</span> [a] <span class="kw">where</span>
+   mempty  <span class="fu">=</span> []
+   mappend <span class="fu">=</span> (<span class="fu">++</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Sum</span> a <span class="fu">=</span> <span class="dt">Sum</span> {<span class="ot"> getSum ::</span> a }
+
+<span class="kw">instance</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">Sum</span> a) <span class="kw">where</span>
+   mempty <span class="fu">=</span> <span class="dt">Sum</span> <span class="dv">0</span>
+   <span class="dt">Sum</span> x <span class="ot">`mappend`</span> <span class="dt">Sum</span> y <span class="fu">=</span> <span class="dt">Sum</span> (x <span class="fu">+</span> y)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Product</span> a <span class="fu">=</span> <span class="dt">Product</span> {<span class="ot"> getProduct ::</span> a }
+
+<span class="kw">instance</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">Product</span> a) <span class="kw">where</span>
+   mempty <span class="fu">=</span> <span class="dt">Product</span> <span class="dv">1</span>
+   <span class="dt">Product</span> x <span class="ot">`mappend`</span> <span class="dt">Product</span> y <span class="fu">=</span> <span class="dt">Product</span> (x <span class="fu">*</span> y)</code></pre></div>
+</div>
+<div id="applicative" class="slide section level1">
+<h1>Applicative</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> f <span class="kw">where</span>
+<span class="ot">  pure ::</span> a <span class="ot">-&gt;</span> f a
+<span class="ot">  (&lt;*&gt;) ::</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b  <span class="co">-- apply</span>
+  (<span class="fu">&lt;*&gt;</span>) <span class="fu">=</span> liftA2 id
+<span class="ot">  liftA2 ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f c
+  liftA2 f x <span class="fu">=</span> (<span class="fu">&lt;*&gt;</span>) (fmap f x)</code></pre></div>
+<p>Functors which can:</p>
+<ul>
+<li>embed pure expressions (<code>pure</code>)</li>
+<li>sequence computations and combine their results (<code>&lt;*&gt;</code> and <code>liftA2</code>)</li>
+</ul>
+<h2 id="laws-2">Laws</h2>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">pure id <span class="fu">&lt;*&gt;</span> v <span class="fu">=</span> v                            <span class="co">-- Identity</span>
+pure f <span class="fu">&lt;*&gt;</span> pure x <span class="fu">=</span> pure (f x)               <span class="co">-- Homomorphism</span>
+u <span class="fu">&lt;*&gt;</span> pure y <span class="fu">=</span> pure (<span class="fu">$</span> y) <span class="fu">&lt;*&gt;</span> u              <span class="co">-- Interchange</span>
+pure (<span class="fu">.</span>) <span class="fu">&lt;*&gt;</span> u <span class="fu">&lt;*&gt;</span> v <span class="fu">&lt;*&gt;</span> w <span class="fu">=</span> u <span class="fu">&lt;*&gt;</span> (v <span class="fu">&lt;*&gt;</span> w) <span class="co">-- Composition</span>
+fmap f x <span class="fu">=</span> pure f <span class="fu">&lt;*&gt;</span> x                      <span class="co">-- Relation with Functor</span></code></pre></div>
+</div>
+<div id="applicative-1" class="slide section level1">
+<h1>Applicative</h1>
+</div>
+<div id="foldable" class="slide section level1">
+<h1>Foldable</h1>
+</div>
+<div id="traversable" class="slide section level1">
+<h1>Traversable</h1>
+</div>
+<div id="bibliography" class="slide section level1">
+<h1>Bibliography</h1>
+<ul>
+<li><p><a href="https://en.wikibooks.org/wiki/Haskell">Haskell Wikibook</a></p></li>
+<li><p><a href="https://wiki.haskell.org/Typeclassopedia">Typeclassopedia</a></p></li>
+</ul>
+</div>
+</body>
+</html>
