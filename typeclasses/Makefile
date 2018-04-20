@@ -1,15 +1,17 @@
-typeclasses.html: typeclasses.lhs
-	pandoc -s --webtex -t slidy typeclasses.lhs -o typeclasses.html
+slides = typeclasses
 
-typeclasses-nonet.html: typeclasses.lhs
-	pandoc -s --webtex -t slidy -V slidy-url:http://localhost:8000/ typeclasses.lhs -o typeclasses-nonet.html 
+$(slides).html: $(slides).lhs
+	pandoc -s --webtex -t slidy $(slides).lhs -o $(slides).html
+
+$(slides)-nonet.html: $(slides).lhs
+	pandoc -s --webtex -t slidy -V slidy-url:http://localhost:8000/ $(slides).lhs -o $(slides)-nonet.html 
 
 .PHONY: clean runserver
 clean:
-	rm -f typeclasses.html typeckasses-nonet.html
+	rm -f $(slides).html $(slides)-nonet.html
 
 runserver:
 	python -m http.server
 
-open:
-	open http://localhost:8000/typeckasses-nonet.html
+open: $(slides)-nonet.html
+	open http://localhost:8000/$(slides)-nonet.html
