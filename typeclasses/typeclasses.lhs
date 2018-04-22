@@ -21,6 +21,8 @@ Index
 >                       , Monoid(..)
 >                       , Applicative(..)
 >                       , Foldable(..)
+>                       , Traversable(..)
+>                       , (<$>)
 >                       )
 
 </div>
@@ -509,8 +511,33 @@ Foldable
 Traversable
 ===========
 
+> class (Functor t, Foldable t) => Traversable t where
+>   traverse :: (Applicative f) => (a -> f b) -> t a -> f (t b)
+>   sequenceA :: (Applicative f) => t (f a) -> f (t a)
+>   sequenceA = traverse id
+
 Example
 =======
+
+> data Tree a = Leaf | Node (Tree a) a (Tree a) deriving Show
+
+* `fmap` recreates the structure changing the values
+
+> instance Functor Tree where -- g :: a -> b
+>   fmap _ Leaf           = Leaf
+>   fmap g (Node lt a rt) = Node (fmap g lt) (g a) (fmap g rt)
+
+* `foldMap` squashes the structure with the rules given by `Monoid m`
+
+> instance Foldable Tree where -- g :: Monoid m => a -> m
+>   foldMap g Leaf           = mempty
+>   foldMap g (Node lt a rt) = foldMap g lt <> g a <> foldMap g rt
+
+* `traverse` recreates the structure inside the context given by `Applicative f` (can do both)
+
+> instance Traversable Tree where -- g :: Applicative f => (a -> f b) 
+>   traverse g Leaf           = pure Leaf
+>   traverse g (Node lt a rt) = Node <$> traverse g lt <*> g a <*> traverse g rt
 
 Bibliography
 ============
