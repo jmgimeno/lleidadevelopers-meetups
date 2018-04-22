@@ -6,12 +6,13 @@ Index
 =====
 
 - Typeclasses and instances
-- Monoid
-- Foldable
 - Functor
-- Applicative Functor
+- Monoid
+- Applicative
+- Foldable
 - Traversable
-- Monad
+- Concluding example
+- (Sorry, no monads this time)
 
 <div style="display: none;">
 
@@ -458,8 +459,8 @@ foldr :: (a -> (b -> b)) -> b -> [a] -> b
 foldr f z xs = appEndo (foldComposing f xs) z
 ```
 
-Foldables
-=========
+Foldable
+========
 
 * Finally, the class for foldable is (with most methods omitted):
 
@@ -508,6 +509,8 @@ Foldable
 Traversable
 ===========
 
+Example
+=======
 
 Bibliography
 ============
