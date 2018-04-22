@@ -19,6 +19,7 @@ Index
 >                       , Functor(..)
 >                       , Monoid(..)
 >                       , Applicative(..)
+>                       , Foldable(..)
 >                       )
 
 </div>
@@ -357,8 +358,156 @@ ghci> [4,5] <**> [(2*),(3*)]
 Foldable
 ========
 
+* First, let's remember folds over lists:
+
+```haskell
+foldr :: (a -> b -> b) -> b -> [a] -> b
+foldr _ z []     = z
+foldr f z (a:as) = f a (foldr f z as)
+```
+
+* `foldr` substitutes `(:)` by `f` and `[]` by `z` in the structure of the list.
+
+> -- a1  :  (a2  :  (a3  :  (a4  :  [])))
+> -- a1 `f` (a2 `f` (a3 `f` (a4 `f` z )))
+
+* Lots of functions on lists can be expressed as folds.
+
+```haskell
+length   = foldr (\_ n -> 1 + n) 0
+map f    = foldr (\x xs -> f x : xs) []
+filter p = foldr (\x xs -> if p x then x : xs else xs) []
+reverse  = foldr (\x xs -> xs ++ [x]) []
+(++ ys)  = foldr (:) ys
+and      = foldr (&&) True -- even works on infinite lists !!!
+```
+
+Foldable
+========
+
+* There is also `foldl` which do the folding _from the other side_
+
+> foldl :: (b -> a -> b) -> b -> [a] -> b
+> foldl _ z []     = z
+> foldl f z (a:as) = foldl f (f z a) as
+
+* Accumulates successive elements of the list using `f` parting from `z`
+
+> --          a1   : (a2   : (a3   : (a4:[])))
+> -- (((z `f` a1) `f` a2) `f` a3) `f` a4
+
+* It cannot work on infinite lists (`f` does not control the recursion)
+
+> reverse = foldl (flip (:)) []
+
+* There is also: `foldr1`, `foldl1` and `foldl'`. 
+
+Foldable
+========
+
+* Generalizes `folds` to other structures using `Monoids`
+
+```haskell
+a1 `f` (a2 `f` (a3 `f` (a4 `f` z ))) = foldr f z
+-- f = (<>) and z = mempty
+a1 <> (a2 <> (a3 <> (a4 <> mempty))) = foldr mappend mempty
+-- which is mconcat (in Monoid class)
+mconcat :: Monoid m => [m] -> m
+```
+
+```haskell
+ghci> mconcat ["Tree", "fingers"] -- concat
+"Treefingers"
+````
+
+* But we do not want to be restricted to lists of monoidal values, so:
+
+```haskell
+foldMap :: Monoid m => (a -> m) -> [a] -> m
+foldMap g = mconcat . fmap g
+```
+
+```haskell
+ghci> foldMap Sum [1..10]
+Sum {getSum = 55}
+```
+
+Foldable
+========
+
+* But now it seems that only functions to a monoidal value can be folded.
+
+> newtype Endo a = Endo { appEndo :: a -> a }
+>
+> instance Monoid (Endo a) where
+>   mempty                  = Endo id
+>   Endo g `mappend` Endo f = Endo (g . f)
+> 
+> foldComposing :: (a -> (b -> b)) -> [a] -> Endo b
+> foldComposing f = foldMap (Endo . f)
+
+```haskell
+Endo (f a1) <> (Endo (f a2) <> (Endo (f a3) <> (Endo id))) -- foldComposing f [a1, a2, a3]
+Endo (f a1 . (f a2 . (f a3 . id))) 
+```
+
+* And we can recover foldr as:
+
+```haskell
+foldr :: (a -> (b -> b)) -> b -> [a] -> b
+foldr f z xs = appEndo (foldComposing f xs) z
+```
+
+Foldables
+=========
+
+* Finally, the class for foldable is (with most methods omitted):
+
+> class Foldable t where
+>   -- You only have to defined fold or foldMap
+>   fold :: Monoid m => t m -> m
+>   fold = foldMap id
+>
+>   foldMap :: Monoid m => (a -> m) -> t a -> m
+>   foldMap f = foldr (mappend . f) mempty
+>
+>   foldr :: (a -> b -> b) -> b -> t a -> b
+>   foldr f z t = appEndo (foldMap (Endo . f) t) z
+>   -- lots of methods ...
+
+* Some properties of `foldMap`
+
+```haskell
+foldMap (g . f)    = g . foldMap f
+foldMap f          = fold . fmap f
+foldMap g . fmap f = foldMap (g . f) = g . foldMap f
+```
+
+Foldable
+========
+
+* Some more instances of `Foldable`:
+
+> instance Foldable [] where
+>   foldMap f = mconcat . fmap f
+
+> instance Foldable Maybe where
+>   foldMap f Nothing  = mempty
+>   foldMap f (Just x) = f x
+
+> instance Foldable (Either a) where
+>   foldMap _ (Left _)  = mempty
+>   foldMap f (Right y) = f y
+
+> instance Foldable ((,) a) where
+>   foldMap f (_, y) = f y
+
+> instance Foldable Sum where
+>   foldMap f = f . getSum -- actually implemented using coerce
+
 Traversable
 ===========
+
 
 Bibliography
 ============
