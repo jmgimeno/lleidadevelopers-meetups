@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Juan Manuel Gimeno" />
+  <title>RankNTypes (second step in the path to lenses)</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <link rel="stylesheet" type="text/css" media="screen, projection, print"
+    href="http://www.w3.org/Talks/Tools/Slidy2/styles/slidy.css" />
+  <script src="http://www.w3.org/Talks/Tools/Slidy2/scripts/slidy.js"
+    charset="utf-8" type="text/javascript"></script>
+</head>
+<body>
+<div class="slide titlepage">
+  <h1 class="title">RankNTypes (second step in the path to lenses)</h1>
+  <p class="author">
+Juan Manuel Gimeno
+  </p>
+  <p class="date">2 May 2018</p>
+</div>
+<div id="index" class="slide section level1">
+<h1>Index</h1>
+<ul>
+<li>Language extensions</li>
+<li>Rank1 functions</li>
+<li>RankN functions</li>
+<li>(Existential types)</li>
+</ul>
+</div>
+<div id="language-extensions" class="slide section level1">
+<h1>Language extensions</h1>
+<ul>
+<li><p>Haskell is a <strong>well defined</strong> Language</p>
+<ul>
+<li><a href="https://www.haskell.org/onlinereport/">Haskell '98 Report</a></li>
+<li><a href="https://www.haskell.org/onlinereport/haskell2010/">Haskell 2010 Report</a></li>
+</ul></li>
+<li><p>But Haskell was meant to be a playground for experimenting with new functional constructs</p></li>
+<li><p>So GHC embraced the notion of extensions: opt-in functionality that gives the user even more tools when writing their programs</p></li>
+<li><p>The extension that we'll need to use for representing lenses is one that allows <strong>higher rank polymorphism</strong>:</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">{-# LANGUAGE RankNTypes #-}</span></code></pre></div>
+<div style="display: none;">
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">import </span><span class="dt">Prelude</span> <span class="kw">hiding</span> (id)</code></pre></div>
+</div>
+</div>
+<div id="monomorphism" class="slide section level1">
+<h1>Monomorphism</h1>
+<ul>
+<li><p>Before dealing with polymorphism, we must understand <strong>monomorphic values</strong> before</p></li>
+<li><p>What is a concrete value?</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">intId ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
+intId x <span class="fu">=</span> x</code></pre></div>
+<ul>
+<li><code>intId</code> is a fully defined value (a function) od a fully defined type <code>Integer -&gt; Integer</code></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">doubleId ::</span> <span class="dt">Double</span> <span class="ot">-&gt;</span> <span class="dt">Double</span>
+doubleId x <span class="fu">=</span> x</code></pre></div>
+<ul>
+<li><p>This is a complete different value of a completely different types</p>
+<ul>
+<li>But their definitions are exactly the same?</li>
+</ul></li>
+</ul>
+</div>
+<div id="polymorphism" class="slide section level1">
+<h1>Polymorphism</h1>
+<ul>
+<li>Like many languages, Haskell allows to provide a <strong>single definition</strong> to cover these cases (and infinitely more)</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">id<span class="ot"> ::</span> a <span class="ot">-&gt;</span> a
+id x <span class="fu">=</span> x</code></pre></div>
+<ul>
+<li><p>The definition is still the same</p></li>
+<li><p>This kind of polymorphism is called <strong>parametric polimorphism</strong> (in other languages known as <em>generics</em>)</p></li>
+<li><p><strong>Haskell will only allow this if there is indeed a single definition</strong></p>
+<ul>
+<li>You cannot choose the defintion based on its type</li>
+</ul></li>
+<li><p>It also adds safety through a property called <strong>parametricity</strong>:</p>
+<ul>
+<li><p>If we pretend there are no loops or exceptions, then the function <strong>fully determined</strong> by its type.</p></li>
+<li><p>So, if we see the type <code>a -&gt; a</code> it must be the identity function !!!</p></li>
+</ul></li>
+</ul>
+</div>
+<div id="rank-1-polymorphism" class="slide section level1">
+<h1>Rank-1 polymorphism</h1>
+<ul>
+<li><p>Usuelly the cal <code>id</code> <strong>the identity function</strong> but in fact we should think of it as a <strong>whole family of functions</strong></p>
+<ul>
+<li><p>we should really say there is a function <strong>for all</strong> types a</p></li>
+<li><p>that is, for every type <code>a</code>, there is and identity function called <code>id</code>, which is of type <code>a -&gt; a</code></p></li>
+</ul></li>
+<li><p>This is the view of the type-checker and by turning the <code>RankNtypes</code> extension we can be explicit about it</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">{-# LANGUAGE RankNTypes #-}</span>
+
+id<span class="ot"> ::</span> forall a<span class="fu">.</span> a <span class="ot">-&gt;</span> a
+id x <span class="fu">=</span> x</code></pre></div>
+<ul>
+<li><p>Now it is much clearer that <code>id</code> is really a family of infinitely many functions.</p></li>
+<li><p>It is fair to say that it is an <strong>abstract function</strong> (as opposed to a concrete one), because <strong>its type abstracts over the type variable all</strong></p>
+<ul>
+<li>the common and proper mathematical wording is that the type is <strong>universally quantified over a</strong></li>
+</ul></li>
+</ul>
+</div>
+<div id="rank-1-polymorphism-1" class="slide section level1">
+<h1>Rank-1 polymorphism</h1>
+<ul>
+<li>When we <strong>apply</strong> the identity function to a <strong>value</strong> of a <strong>concrete type</strong>, the we <strong>instantiate the type variable a</strong> to that <strong>concrete type</strong></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">id (<span class="dv">3</span><span class="ot"> ::</span> <span class="dt">Integer</span>)</code></pre></div>
+<ul>
+<li><p>At the <strong>application site</strong> the type variable <code>a</code> becomes a concrete type, in this case <code>Integer</code></p></li>
+<li><p>It is valid to apply <code>id</code> with different instantiations of its type variable</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">print (id (<span class="dv">3</span><span class="ot"> ::</span> <span class="dt">Integer</span>), id <span class="st">&quot;blah&quot;</span>)</code></pre></div>
+<ul>
+<li><p>Another way to look at it is in terms of <strong>promise and demand</strong></p>
+<ul>
+<li><p>the <strong>type signature</strong> of <code>id</code> <strong>promises</strong> that the definition works <strong>for all types</strong></p></li>
+<li><p>when you actually <strong>apply</strong> the function you <strong>demand a certain type</strong></p></li>
+<li><p>This interpretation will be very useful when we move to higher-rank polymorphism</p></li>
+</ul></li>
+</ul>
+</div>
+<div id="rank-2-and-higher-polymorphism" class="slide section level1">
+<h1>Rank-2 and higher polymorphism</h1>
+<ul>
+<li>Let's us the explicitness of the quantifier in a type alias</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">IdFunc</span> <span class="fu">=</span> forall a<span class="fu">.</span> a <span class="ot">-&gt;</span> a</code></pre></div>
+<ul>
+<li>As <code>IdFunc</code> is just a <strong>regular type</strong> and we coud have defined:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">id<span class="ot"> ::</span> <span class="dt">IdFunc</span>
+id x <span class="fu">=</span> x</code></pre></div>
+<ul>
+<li>A much more interesting way to use <code>IdFunc</code> is as the domain of a funcion:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">someInt ::</span> <span class="dt">IdFunc</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></code></pre></div>
+<ul>
+<li><p>Since any value of type <code>IdFunc</code> must be the identity funcion, <code>someInt</code> is a function which expects the identity function as its argument and returns an Integer</p></li>
+<li><p>Let's give it some <em>arbitray</em> definition</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">someInt id&#39; <span class="fu">=</span> id&#39; <span class="dv">3</span></code></pre></div>
+</div>
+<div id="rank-2-and-higher-polymorphism-1" class="slide section level1">
+<h1>Rank-2 and higher polymorphism</h1>
+<ul>
+<li>Let's give it some <em>arbitrary</em> definition</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">someInt id&#39; <span class="fu">=</span> id&#39; <span class="dv">3</span></code></pre></div>
+<ul>
+<li><p>This is something new that we didn’t have before !!!!</p>
+<ul>
+<li><code>someInt</code> has received a function <code>id'</code> about which it knows that it is the fully fledged polymorphic identity function</li>
+<li>so <strong>it can instantiate its type variable as it likes</strong>, and it does so.</li>
+</ul></li>
+<li><p>The someInt function isn’t even polymorphic !!!!</p>
+<ul>
+<li>rather it expects a polymorphic function as its argument</li>
+</ul></li>
+<li><p>Let's expand the definition of <code>IdFunc</code> to make this much clearer:</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">someInt ::</span> (forall a<span class="fu">.</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">Integer</span></code></pre></div>
+</div>
+<div id="rank-2-and-higher-polymorphism-2" class="slide section level1">
+<h1>Rank-2 and higher polymorphism</h1>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">someInt ::</span> (forall a<span class="fu">.</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">Integer</span></code></pre></div>
+<ul>
+<li><p>This function is completely <strong>monomorphic</strong> (its type is not quantified)</p></li>
+<li><p>When we apply a polymorphic function like <code>id</code> we get to choose which types to instantiate</p></li>
+<li><p>The someInt function does not give us such a choice</p>
+<ul>
+<li><p>In fact it <strong>requires us</strong> to pass a sufficiently polymorphic function to it such that it can make that choice</p></li>
+<li><p>When we <strong>apply</strong> it, we need to <strong>give it choice</strong></p></li>
+</ul></li>
+<li><p>Let's look at it in terms of <strong>promise / demand </strong>:</p>
+<ul>
+<li><code>id</code> make us a <strong>promise</strong>: to work for all types</li>
+<li>when you <strong>apply id</strong> you <strong>demand</strong> <code>a</code> to be of certain type</li>
+<li><code>someInt</code> <strong>demands</strong> us <strong>to pass a function that makes a promise</strong></li>
+<li>so that it gets to <strong>demand something from it</strong></li>
+</ul></li>
+</ul>
+</div>
+<div id="rank-2-and-higher-polymorphism-3" class="slide section level1">
+<h1>Rank-2 and higher polymorphism</h1>
+<ul>
+<li><p>This is called <strong>rank-2 polymorphism</strong></p></li>
+<li><p>You can have <strong>arbitrary-rank polymorphism</strong> by burying the quantifier in more levels of necessary parentheses</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">SomeInt</span> <span class="fu">=</span> <span class="dt">IdFunc</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
+
+<span class="ot">someOtherInt ::</span> <span class="dt">SomeInt</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
+someOtherInt someInt&#39; <span class="fu">=</span> someInt&#39; id <span class="fu">+</span> someInt&#39; id</code></pre></div>
+<ul>
+<li>This function is <strong>rank-3 polymorphic</strong></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">someOtherInt ::</span> ((forall a<span class="fu">.</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Integer</span></code></pre></div>
+</div>
+<div id="rankntypes-and-lenses" class="slide section level1">
+<h1>RankNTypes and Lenses</h1>
+<ul>
+<li><strong>RankNTypes</strong> will play a fundamental role in the <strong>van Laarhoven</strong> lens representation:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> (<span class="dt">Functor</span> f) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s</code></pre></div>
+<ul>
+<li>Which says that a <code>Lens'</code> is a function which gets a <strong>polymorphic</strong> function as the first parameter</li>
+</ul>
+</div>
+<div id="bibliography" class="slide section level1">
+<h1>Bibliography</h1>
+<ul>
+<li><p><a href="https://ocharles.org.uk/blog/guest-posts/2014-12-18-rank-n-types.html">24 Days of GHC Extensions: Rank N Types</a></p></li>
+<li><p><a href="https://wiki.haskell.org/Rank-N_types">Haskell Wiki: Rank-N types</a></p></li>
+<li><p><a href="http://sleepomeno.github.io/blog/2014/02/12/Explaining-Haskell-RankNTypes-for-all/">Explaining Haskell RankNTypes for All</a></p></li>
+<li><p><a href="https://dl.acm.org/citation.cfm?doid=1111037.1111056">Nils Anders Danielsson, John Hughes, Patrik Jansson and Jeremy Gibbons, &quot;Fast and Loose Reasoning is Morally Correct&quot;, 33rd ACM SIGPLAN-SIGACT symposium on Principles of programming languages (2006)</a></p></li>
+</ul>
+</div>
+</body>
+</html>

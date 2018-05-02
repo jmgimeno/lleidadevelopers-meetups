@@ -222,4 +222,5 @@ Bibliography
 
 * [Explaining Haskell RankNTypes for All](http://sleepomeno.github.io/blog/2014/02/12/Explaining-Haskell-RankNTypes-for-all/)
 
-* [Fast and Loose Reasoning is Morally Correct](http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.59.8232)
+* [Nils Anders Danielsson, John Hughes, Patrik Jansson and Jeremy Gibbons, "Fast and Loose Reasoning is Morally Correct",  33rd ACM SIGPLAN-SIGACT symposium on Principles of programming languages (2006)](https://dl.acm.org/citation.cfm?doid=1111037.1111056)
+
