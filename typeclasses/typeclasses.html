@@ -1,0 +1,646 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Juan Manuel Gimeno" />
+  <title>Typeclassopedia (first step in the path to lenses)</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <link rel="stylesheet" type="text/css" media="screen, projection, print"
+    href="http://www.w3.org/Talks/Tools/Slidy2/styles/slidy.css" />
+  <script src="http://www.w3.org/Talks/Tools/Slidy2/scripts/slidy.js"
+    charset="utf-8" type="text/javascript"></script>
+</head>
+<body>
+<div class="slide titlepage">
+  <h1 class="title">Typeclassopedia (first step in the path to lenses)</h1>
+  <p class="author">
+Juan Manuel Gimeno
+  </p>
+  <p class="date">25 April / 2 May 2018</p>
+</div>
+<div id="index" class="slide section level1">
+<h1>Index</h1>
+<ul>
+<li>Typeclasses and instances</li>
+<li>Functor</li>
+<li>Monoid</li>
+<li>Applicative</li>
+<li>Foldable</li>
+<li>Traversable</li>
+<li>Examples</li>
+<li>(Sorry, no monads this time)</li>
+</ul>
+<div style="display: none;">
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">import </span><span class="dt">Prelude</span> <span class="kw">hiding</span> ( <span class="dt">Eq</span>(..)
+                      , <span class="dt">Functor</span>(<span class="fu">..</span>)
+                      , <span class="dt">Monoid</span>(<span class="fu">..</span>)
+                      , <span class="dt">Applicative</span>(<span class="fu">..</span>)
+                      , <span class="dt">Foldable</span>(<span class="fu">..</span>)
+                      , <span class="dt">Traversable</span>(<span class="fu">..</span>)
+                      , (<span class="fu">&lt;$&gt;</span>)
+                      )</code></pre></div>
+</div>
+</div>
+<div id="typeclasses-and-instances" class="slide section level1">
+<h1>Typeclasses and instances</h1>
+<ul>
+<li>Typeclasses group types
+<ul>
+<li>Members of the class are the types not the values</li>
+</ul></li>
+<li>A typeclass defines names and signatures for functions common for all types in the class</li>
+<li>Sometimes also a default implementations is provided</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Eq</span> a <span class="kw">where</span>
+<span class="ot">  (==) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>
+<span class="ot">  (/=) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>
+  x <span class="fu">/=</span> y <span class="fu">=</span> not (x <span class="fu">==</span> y)
+  x <span class="fu">==</span> y <span class="fu">=</span> not (x <span class="fu">/=</span> y)</code></pre></div>
+<ul>
+<li>Instances give the implementation (methods) for each type</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> <span class="dt">Eq</span> [a] <span class="kw">where</span>
+  []     <span class="fu">==</span> []     <span class="fu">=</span> <span class="dt">True</span> 
+  _      <span class="fu">==</span> []     <span class="fu">=</span> <span class="dt">False</span>
+  []     <span class="fu">==</span> _      <span class="fu">=</span> <span class="dt">False</span>
+  (a<span class="fu">:</span>as) <span class="fu">==</span> (b<span class="fu">:</span>bs) <span class="fu">=</span> (a <span class="fu">==</span> b) <span class="fu">&amp;&amp;</span> (as <span class="fu">==</span> bs)</code></pre></div>
+</div>
+<div id="typeclasses" class="slide section level1">
+<h1>Typeclasses</h1>
+<div class="figure">
+<img src="Typeclassopedia-diagram.png" alt="(Typeclasses described in the Typeclassopedia)" style="width:80.0%" />
+<p class="caption">(Typeclasses described in the Typeclassopedia)</p>
+</div>
+</div>
+<div id="functor" class="slide section level1">
+<h1>Functor</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="kw">where</span>
+<span class="ot">  fmap ::</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
+<ul>
+<li>fmap lifts a pure function from the <em>&quot;normal world&quot;</em> to the <em>&quot;<code>f</code> world&quot;</em> (the <strong>context</strong> defined by the functor)</li>
+</ul>
+<div style="display: none;">
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">(&lt;$&gt;) ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
+</div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- Data.Functor</span>
+(<span class="fu">&lt;$&gt;</span>) <span class="fu">=</span> fmap</code></pre></div>
+<h2 id="laws">Laws</h2>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmap id      <span class="fu">=</span> id
+fmap (f <span class="fu">.</span> g) <span class="fu">=</span> fmap f <span class="fu">.</span> fmap g</code></pre></div>
+<ul>
+<li><p>These laws ensure that <code>fmap g</code> <strong>does not change the structure</strong> of a container, only the elements.</p></li>
+<li><p>Equivalently, and more simply, they ensure that <code>fmap g</code> changes a value without altering its contex.</p></li>
+</ul>
+</div>
+<div id="functor-1" class="slide section level1">
+<h1>Functor</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> [] <span class="kw">where</span>
+  fmap <span class="fu">=</span> map</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Maybe</span> <span class="kw">where</span>
+  fmap _ <span class="dt">Nothing</span>  <span class="fu">=</span> <span class="dt">Nothing</span>
+  fmap f (<span class="dt">Just</span> a) <span class="fu">=</span> <span class="dt">Just</span> (f a)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">Either</span> a) <span class="kw">where</span>
+  fmap _ (<span class="dt">Left</span> a)  <span class="fu">=</span> <span class="dt">Left</span> a
+  fmap f (<span class="dt">Right</span> b) <span class="fu">=</span> <span class="dt">Right</span> (f b)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- writer</span>
+<span class="kw">instance</span> <span class="dt">Functor</span> ((,) a) <span class="kw">where</span>
+  fmap f (a, x) <span class="fu">=</span> (a, f x)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- reader</span>
+<span class="kw">instance</span> <span class="dt">Functor</span> ((<span class="ot">-&gt;</span>) a) <span class="kw">where</span>
+  fmap <span class="fu">=</span> (<span class="fu">.</span>)</code></pre></div>
+</div>
+<div id="functor-2" class="slide section level1">
+<h1>Functor</h1>
+<ul>
+<li>More important than you think :-D</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- Data.Functor.Identity </span>
+<span class="kw">newtype</span> <span class="dt">Identity</span> a <span class="fu">=</span> <span class="dt">Identity</span> {<span class="ot"> runIdentity ::</span> a }
+
+<span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Identity</span> <span class="kw">where</span>
+  fmap f (<span class="dt">Identity</span> a) <span class="fu">=</span> <span class="dt">Identity</span> (f a)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- Data.Functor.Const</span>
+<span class="kw">newtype</span> <span class="dt">Const</span> a b <span class="fu">=</span> <span class="dt">Const</span> {<span class="ot"> getConst ::</span> a }
+
+<span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">Const</span> a) <span class="kw">where</span>
+  fmap _ (<span class="dt">Const</span> a) <span class="fu">=</span> <span class="dt">Const</span> a</code></pre></div>
+</div>
+<div id="monoid" class="slide section level1">
+<h1>Monoid</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Monoid</span> a <span class="kw">where</span>
+<span class="ot">  mempty  ::</span> a
+<span class="ot">  mappend ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a
+
+<span class="ot">  mconcat ::</span> [a] <span class="ot">-&gt;</span> a
+  mconcat <span class="fu">=</span> foldr mappend mempty</code></pre></div>
+<div style="display: none;">
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">(&lt;&gt;) ::</span> <span class="dt">Monoid</span> m <span class="ot">=&gt;</span> m <span class="ot">-&gt;</span> m <span class="ot">-&gt;</span> m</code></pre></div>
+</div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- Data.Monoid</span>
+(<span class="fu">&lt;&gt;</span>) <span class="fu">=</span> mappend </code></pre></div>
+<ul>
+<li>types whose values which can be combined / accumulated</li>
+</ul>
+<h2 id="laws-1">Laws</h2>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">mempty <span class="fu">&lt;&gt;</span> x <span class="fu">=</span> x               <span class="co">-- Left identity</span>
+x <span class="fu">&lt;&gt;</span> mempty <span class="fu">=</span> x               <span class="co">-- Right identity</span>
+(x <span class="fu">&lt;&gt;</span> y) <span class="fu">&lt;&gt;</span> z <span class="fu">=</span> x <span class="fu">&lt;&gt;</span> (y <span class="fu">&lt;&gt;</span> z) <span class="co">-- associativity</span></code></pre></div>
+</div>
+<div id="monoid-1" class="slide section level1">
+<h1>Monoid</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Monoid</span> [a] <span class="kw">where</span>
+  mempty  <span class="fu">=</span> []
+  mappend <span class="fu">=</span> (<span class="fu">++</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Sum</span> a <span class="fu">=</span> <span class="dt">Sum</span> {<span class="ot"> getSum ::</span> a }
+
+<span class="kw">instance</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">Sum</span> a) <span class="kw">where</span>
+  mempty <span class="fu">=</span> <span class="dt">Sum</span> <span class="dv">0</span>
+  <span class="dt">Sum</span> x <span class="ot">`mappend`</span> <span class="dt">Sum</span> y <span class="fu">=</span> <span class="dt">Sum</span> (x <span class="fu">+</span> y)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Product</span> a <span class="fu">=</span> <span class="dt">Product</span> {<span class="ot"> getProduct ::</span> a }
+
+<span class="kw">instance</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">Product</span> a) <span class="kw">where</span>
+  mempty <span class="fu">=</span> <span class="dt">Product</span> <span class="dv">1</span>
+  <span class="dt">Product</span> x <span class="ot">`mappend`</span> <span class="dt">Product</span> y <span class="fu">=</span> <span class="dt">Product</span> (x <span class="fu">*</span> y)</code></pre></div>
+</div>
+<div id="applicative" class="slide section level1">
+<h1>Applicative</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> f <span class="kw">where</span>
+<span class="ot">  pure ::</span> a <span class="ot">-&gt;</span> f a
+<span class="ot">  (&lt;*&gt;) ::</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b  <span class="co">-- apply</span>
+  (<span class="fu">&lt;*&gt;</span>) <span class="fu">=</span> liftA2 id
+<span class="ot">  liftA2 ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f c
+  liftA2 f x <span class="fu">=</span> (<span class="fu">&lt;*&gt;</span>) (fmap f x)</code></pre></div>
+<p>Functors which can:</p>
+<ul>
+<li>embed pure expressions (<code>pure</code>)</li>
+<li><strong>sequence</strong> computations and <strong>combine</strong> their results (<code>&lt;*&gt;</code> and <code>liftA2</code>)</li>
+</ul>
+<h2 id="laws-2">Laws</h2>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">pure id <span class="fu">&lt;*&gt;</span> v <span class="fu">=</span> v                            <span class="co">-- Identity</span>
+pure f <span class="fu">&lt;*&gt;</span> pure x <span class="fu">=</span> pure (f x)               <span class="co">-- Homomorphism</span>
+u <span class="fu">&lt;*&gt;</span> pure y <span class="fu">=</span> pure (<span class="fu">$</span> y) <span class="fu">&lt;*&gt;</span> u              <span class="co">-- Interchange</span>
+pure (<span class="fu">.</span>) <span class="fu">&lt;*&gt;</span> u <span class="fu">&lt;*&gt;</span> v <span class="fu">&lt;*&gt;</span> w <span class="fu">=</span> u <span class="fu">&lt;*&gt;</span> (v <span class="fu">&lt;*&gt;</span> w) <span class="co">-- Composition</span>
+fmap f x <span class="fu">=</span> pure f <span class="fu">&lt;*&gt;</span> x                      <span class="co">-- Relation with Functor</span></code></pre></div>
+</div>
+<div id="applicative-1" class="slide section level1">
+<h1>Applicative</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">Maybe</span> <span class="kw">where</span>
+  pure              <span class="fu">=</span> <span class="dt">Just</span>
+  <span class="dt">Just</span> f <span class="fu">&lt;*&gt;</span> <span class="dt">Just</span> x <span class="fu">=</span> <span class="dt">Just</span> (f x)
+  _      <span class="fu">&lt;*&gt;</span> _      <span class="fu">=</span> <span class="dt">Nothing</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Applicative</span> [] <span class="kw">where</span>
+  pure x    <span class="fu">=</span> [x]
+  fs <span class="fu">&lt;*&gt;</span> xs <span class="fu">=</span> [f x <span class="fu">|</span> f <span class="ot">&lt;-</span> fs, x <span class="ot">&lt;-</span> xs] <span class="co">-- chooses order</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">ZipList</span> a <span class="fu">=</span> <span class="dt">ZipList</span> {<span class="ot"> getZipList ::</span> [a] }
+
+<span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">ZipList</span> <span class="kw">where</span>
+  pure x                        <span class="fu">=</span> <span class="dt">ZipList</span> (repeat x)
+  (<span class="dt">ZipList</span> fs) <span class="fu">&lt;*&gt;</span> (<span class="dt">ZipList</span> xs) <span class="fu">=</span> <span class="dt">ZipList</span> (zipWith (<span class="fu">$</span>) fs xs)</code></pre></div>
+<div style="display: none;">
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">ZipList</span> <span class="kw">where</span>
+  fmap f (<span class="dt">ZipList</span> xs) <span class="fu">=</span> <span class="dt">ZipList</span> (fmap f xs)</code></pre></div>
+</div>
+</div>
+<div id="applicative-2" class="slide section level1">
+<h1>Applicative</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">Identity</span> <span class="kw">where</span>
+  pure                          <span class="fu">=</span> <span class="dt">Identity</span>
+  (<span class="dt">Identity</span> f) <span class="fu">&lt;*&gt;</span> (<span class="dt">Identity</span> x) <span class="fu">=</span> <span class="dt">Identity</span> (f x)</code></pre></div>
+<ul>
+<li><p>The <strong><code>Const</code></strong> instance will be very, very important for lenses</p></li>
+<li><p>Remember that you need the constraint <strong><code>Monoid m</code></strong></p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Monoid</span> m <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">Const</span> m) <span class="kw">where</span>
+  pure _                  <span class="fu">=</span> <span class="dt">Const</span> mempty
+  (<span class="dt">Const</span> x) <span class="fu">&lt;*&gt;</span> (<span class="dt">Const</span> y) <span class="fu">=</span> <span class="dt">Const</span> (x <span class="fu">&lt;&gt;</span> y)</code></pre></div>
+</div>
+<div id="applicative-3" class="slide section level1">
+<h1>Applicative</h1>
+<ul>
+<li><p>The Monoidal formulation provides a clearer view of how applicative manipulates functorial contexts.</p></li>
+<li><p>There are deep theoretical reasons behind the name &quot;monoidal&quot;.</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Monoidal</span> f <span class="kw">where</span>
+<span class="ot">  unit  ::</span> f ()
+<span class="ot">  (*&amp;*) ::</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f (a,b)</code></pre></div>
+<h2 id="laws-3">Laws</h2>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmap snd <span class="fu">$</span> unit <span class="fu">*&amp;*</span> v <span class="fu">=</span> v                    <span class="co">-- Left identity</span>
+fmap fst <span class="fu">$</span> u <span class="fu">*&amp;*</span> unit <span class="fu">=</span> u                    <span class="co">-- Right identity</span>
+fmap asl <span class="fu">$</span> u <span class="fu">*&amp;*</span> (v <span class="fu">*&amp;*</span> w) <span class="fu">=</span> (u <span class="fu">*&amp;*</span> v) <span class="fu">*&amp;*</span> w <span class="co">-- Associativity</span>
+<span class="co">-- asl (x, (y, z)) = ((x, y), z)</span></code></pre></div>
+<ul>
+<li><code>fst</code>, <code>snd</code> and <code>asl</code> are needed because monoidal properties hold <strong>upto isomorphism</strong>.</li>
+</ul>
+</div>
+<div id="applicative-4" class="slide section level1">
+<h1>Applicative</h1>
+<ul>
+<li><p>Contexts somtimes represent some <code>impure</code> computations:</p>
+<ul>
+<li><p><strong>Maybe a</strong>: computation of type a which may fail</p></li>
+<li><p><strong>[a]</strong>: nondeterministic computations of type a</p></li>
+</ul></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> (<span class="fu">+</span>) <span class="fu">&lt;$&gt;</span> [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>] <span class="fu">&lt;*&gt;</span> [<span class="dv">10</span>, <span class="dv">20</span>] <span class="fu">=</span> [<span class="dv">11</span>,<span class="dv">21</span>,<span class="dv">12</span>,<span class="dv">22</span>,<span class="dv">13</span>,<span class="dv">23</span>]
+ghci<span class="fu">&gt;</span> (<span class="fu">+</span>) <span class="fu">&lt;$&gt;</span> [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>] <span class="fu">&lt;*&gt;</span> [] <span class="fu">=</span> []
+ghci<span class="fu">&gt;</span> (<span class="fu">+</span>) <span class="fu">&lt;$&gt;</span> <span class="dt">Just</span> <span class="dv">1</span> <span class="fu">&lt;*&gt;</span> <span class="dt">Just</span> <span class="dv">2</span> <span class="fu">=</span> <span class="dt">Just</span> <span class="dv">3</span>
+ghci<span class="fu">&gt;</span> (<span class="fu">+</span>) <span class="fu">&lt;$&gt;</span> <span class="dt">Nothing</span> <span class="fu">&lt;*&gt;</span> <span class="dt">Just</span> <span class="dv">2</span> <span class="fu">=</span> <span class="dt">Nothing</span></code></pre></div>
+<ul>
+<li><p>As you can see in the list example, <strong>effects are sequenced from left to right</strong> (see implementation)</p></li>
+<li><p>For <strong>commutative applicative functors</strong> (e.g <code>Maybe</code>) this does not matter because they satisfy:</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">f <span class="fu">&lt;$&gt;</span> u <span class="fu">&lt;*&gt;</span> v <span class="fu">=</span> flip f <span class="fu">&lt;$&gt;</span> v <span class="fu">&lt;*&gt;</span> u</code></pre></div>
+</div>
+<div id="applicative-5" class="slide section level1">
+<h1>Applicative</h1>
+<ul>
+<li><p>As we have ssen with lists, the convention in Haskell is to always implement <code>(&lt;*&gt;)</code> and other applicative operators using <strong>left-to-right sequencing</strong></p></li>
+<li><p>Commutativity (or the lack thereof) affects other functions which are derived from <code>(&lt;*&gt;)</code> as well.</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- Sequence actions, discarding the value of the first argument</span>
+<span class="ot">(*&gt;) ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f b
+a1 <span class="fu">*&gt;</span> a2 <span class="fu">=</span> (id <span class="fu">&lt;$</span> a1) <span class="fu">&lt;*&gt;</span> a2</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- Sequence actions, discarding the value of the second argument</span>
+<span class="ot">(&lt;*) ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f a
+(<span class="fu">&lt;*</span>) <span class="fu">=</span> liftA2 const</code></pre></div>
+<ul>
+<li>The definition of <code>(*&gt;)</code> uses this operator for functors</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- Replace all locations in the input with the same value</span>
+<span class="ot">(&lt;$) ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f a
+(<span class="fu">&lt;$</span>) <span class="fu">=</span> fmap <span class="fu">.</span> const</code></pre></div>
+</div>
+<div id="applicative-6" class="slide section level1">
+<h1>Applicative</h1>
+<ul>
+<li>For commutative aplicatives swapping the arguments does not affect the <strong>effects</strong> (that is, the being and nothingness of wrapped values)</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> <span class="dt">Just</span> <span class="dv">2</span> <span class="fu">*&gt;</span> <span class="dt">Just</span> <span class="dv">3</span>
+<span class="dt">Just</span> <span class="dv">3</span>
+ghci<span class="fu">&gt;</span> <span class="dt">Just</span> <span class="dv">3</span> <span class="fu">*&gt;</span> <span class="dt">Just</span> <span class="dv">2</span>
+<span class="dt">Just</span> <span class="dv">2</span>
+ghci<span class="fu">&gt;</span> <span class="dt">Just</span> <span class="dv">2</span> <span class="fu">*&gt;</span> <span class="dt">Nothing</span>
+<span class="dt">Nothing</span>
+ghci<span class="fu">&gt;</span> <span class="dt">Nothing</span> <span class="fu">*&gt;</span> <span class="dt">Just</span> <span class="dv">2</span>
+<span class="dt">Nothing</span></code></pre></div>
+<ul>
+<li>For <code>IO</code>, however, swapping the arguments does reorder the effects:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> (print <span class="st">&quot;foo&quot;</span> <span class="fu">*&gt;</span> pure <span class="dv">2</span>) <span class="fu">*&gt;</span> (print <span class="st">&quot;bar&quot;</span> <span class="fu">*&gt;</span> pure <span class="dv">3</span>)
+<span class="st">&quot;foo&quot;</span>
+<span class="st">&quot;bar&quot;</span>
+<span class="dv">3</span>
+ghci<span class="fu">&gt;</span> (print <span class="st">&quot;bar&quot;</span> <span class="fu">*&gt;</span> pure <span class="dv">3</span>) <span class="fu">*&gt;</span> (print <span class="st">&quot;foo&quot;</span> <span class="fu">*&gt;</span> pure <span class="dv">2</span>)
+<span class="st">&quot;bar&quot;</span>
+<span class="st">&quot;foo&quot;</span>
+<span class="dv">2</span></code></pre></div>
+</div>
+<div id="applicative-7" class="slide section level1">
+<h1>Applicative</h1>
+<ul>
+<li>For the same reason, <code>&lt;**&gt;</code> is not just <code>flip &lt;*&gt;</code></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">(&lt;**&gt;) ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f b
+(<span class="fu">&lt;**&gt;</span>) <span class="fu">=</span> liftA2 (\a f <span class="ot">-&gt;</span> f a)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> [(<span class="dv">2</span><span class="fu">*</span>),(<span class="dv">3</span><span class="fu">*</span>)] <span class="fu">&lt;*&gt;</span> [<span class="dv">4</span>,<span class="dv">5</span>]
+[<span class="dv">8</span>,<span class="dv">10</span>,<span class="dv">12</span>,<span class="dv">15</span>]
+ghci<span class="fu">&gt;</span> (flip (<span class="fu">&lt;*&gt;</span>)) [<span class="dv">4</span>,<span class="dv">5</span>]  [(<span class="dv">2</span><span class="fu">*</span>),(<span class="dv">3</span><span class="fu">*</span>)]
+[<span class="dv">8</span>,<span class="dv">10</span>,<span class="dv">12</span>,<span class="dv">15</span>]
+ghci<span class="fu">&gt;</span> [<span class="dv">4</span>,<span class="dv">5</span>] <span class="fu">&lt;**&gt;</span> [(<span class="dv">2</span><span class="fu">*</span>),(<span class="dv">3</span><span class="fu">*</span>)]
+[<span class="dv">8</span>,<span class="dv">12</span>,<span class="dv">10</span>,<span class="dv">15</span>]</code></pre></div>
+<ul>
+<li><p>So in applicative effects <strong>order can matter</strong> because computacions are <strong>sequenced</strong></p></li>
+<li><p>It is no longer the <strong>perfect world of pure functions</strong></p></li>
+<li><p><strong>Be careful</strong> because type signatures don't give all the information you may need !!!</p></li>
+</ul>
+</div>
+<div id="foldable" class="slide section level1">
+<h1>Foldable</h1>
+<ul>
+<li>First, let's remember folds over lists:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">foldr<span class="ot"> ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> b
+foldr _ z []     <span class="fu">=</span> z
+foldr f z (a<span class="fu">:</span>as) <span class="fu">=</span> f a (foldr f z as)</code></pre></div>
+<ul>
+<li><code>foldr</code> substitutes <code>(:)</code> by <code>f</code> and <code>[]</code> by <code>z</code> in the structure of the list.</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- a1  :  (a2  :  (a3  :  (a4  :  [])))</span>
+<span class="co">-- a1 `f` (a2 `f` (a3 `f` (a4 `f` z )))</span></code></pre></div>
+<ul>
+<li>Lots of functions on lists can be expressed as folds.</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">length   <span class="fu">=</span> foldr (\_ n <span class="ot">-&gt;</span> <span class="dv">1</span> <span class="fu">+</span> n) <span class="dv">0</span>
+map f    <span class="fu">=</span> foldr (\x xs <span class="ot">-&gt;</span> f x <span class="fu">:</span> xs) []
+filter p <span class="fu">=</span> foldr (\x xs <span class="ot">-&gt;</span> <span class="kw">if</span> p x <span class="kw">then</span> x <span class="fu">:</span> xs <span class="kw">else</span> xs) []
+reverse  <span class="fu">=</span> foldr (\x xs <span class="ot">-&gt;</span> xs <span class="fu">++</span> [x]) []
+(<span class="fu">++</span> ys)  <span class="fu">=</span> foldr (<span class="fu">:</span>) ys
+and      <span class="fu">=</span> foldr (<span class="fu">&amp;&amp;</span>) <span class="dt">True</span> <span class="co">-- even works on infinite lists !!!</span></code></pre></div>
+</div>
+<div id="foldable-1" class="slide section level1">
+<h1>Foldable</h1>
+<ul>
+<li>There is also <code>foldl</code> which do the folding <em>from the other side</em></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">foldl<span class="ot"> ::</span> (b <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> b
+foldl _ z []     <span class="fu">=</span> z
+foldl f z (a<span class="fu">:</span>as) <span class="fu">=</span> foldl f (f z a) as</code></pre></div>
+<ul>
+<li>Accumulates successive elements of the list using <code>f</code> parting from <code>z</code></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">--          a1   : (a2   : (a3   : (a4:[])))</span>
+<span class="co">-- (((z `f` a1) `f` a2) `f` a3) `f` a4</span></code></pre></div>
+<ul>
+<li>It cannot work on infinite lists (<code>f</code> does not control the recursion)</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">reverse <span class="fu">=</span> foldl (flip (<span class="fu">:</span>)) []</code></pre></div>
+<ul>
+<li>There is also: <code>foldr1</code>, <code>foldl1</code> and <code>foldl'</code>.</li>
+</ul>
+</div>
+<div id="foldable-2" class="slide section level1">
+<h1>Foldable</h1>
+<ul>
+<li>Generalizes <code>folds</code> to other structures using <code>Monoids</code></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">a1 <span class="ot">`f`</span> (a2 <span class="ot">`f`</span> (a3 <span class="ot">`f`</span> (a4 <span class="ot">`f`</span> z ))) <span class="fu">=</span> foldr f z
+<span class="co">-- f = (&lt;&gt;) and z = mempty</span>
+a1 <span class="fu">&lt;&gt;</span> (a2 <span class="fu">&lt;&gt;</span> (a3 <span class="fu">&lt;&gt;</span> (a4 <span class="fu">&lt;&gt;</span> mempty))) <span class="fu">=</span> foldr mappend mempty
+<span class="co">-- which is mconcat (in Monoid class)</span>
+mconcat<span class="ot"> ::</span> <span class="dt">Monoid</span> m <span class="ot">=&gt;</span> [m] <span class="ot">-&gt;</span> m</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> mconcat [<span class="st">&quot;Tree&quot;</span>, <span class="st">&quot;fingers&quot;</span>] <span class="co">-- concat</span>
+<span class="st">&quot;Treefingers&quot;</span></code></pre></div>
+<ul>
+<li>But we do not want to be restricted to lists of monoidal values, so:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">foldMap<span class="ot"> ::</span> <span class="dt">Monoid</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> m
+foldMap g <span class="fu">=</span> mconcat <span class="fu">.</span> fmap g</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> foldMap <span class="dt">Sum</span> [<span class="dv">1</span><span class="fu">..</span><span class="dv">10</span>]
+<span class="dt">Sum</span> {getSum <span class="fu">=</span> <span class="dv">55</span>}</code></pre></div>
+</div>
+<div id="foldable-3" class="slide section level1">
+<h1>Foldable</h1>
+<ul>
+<li>But now it seems that only functions to a monoidal value can be folded.</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Endo</span> a <span class="fu">=</span> <span class="dt">Endo</span> {<span class="ot"> appEndo ::</span> a <span class="ot">-&gt;</span> a }
+
+<span class="kw">instance</span> <span class="dt">Monoid</span> (<span class="dt">Endo</span> a) <span class="kw">where</span>
+  mempty                  <span class="fu">=</span> <span class="dt">Endo</span> id
+  <span class="dt">Endo</span> g <span class="ot">`mappend`</span> <span class="dt">Endo</span> f <span class="fu">=</span> <span class="dt">Endo</span> (g <span class="fu">.</span> f)
+
+<span class="ot">foldComposing ::</span> (a <span class="ot">-&gt;</span> (b <span class="ot">-&gt;</span> b)) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Endo</span> b
+foldComposing f <span class="fu">=</span> foldMap (<span class="dt">Endo</span> <span class="fu">.</span> f)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="dt">Endo</span> (f a1) <span class="fu">&lt;&gt;</span> (<span class="dt">Endo</span> (f a2) <span class="fu">&lt;&gt;</span> (<span class="dt">Endo</span> (f a3) <span class="fu">&lt;&gt;</span> (<span class="dt">Endo</span> id))) <span class="co">-- foldComposing f [a1, a2, a3]</span>
+<span class="dt">Endo</span> (f a1 <span class="fu">.</span> (f a2 <span class="fu">.</span> (f a3 <span class="fu">.</span> id))) </code></pre></div>
+<ul>
+<li>And we can recover foldr as:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">foldr<span class="ot"> ::</span> (a <span class="ot">-&gt;</span> (b <span class="ot">-&gt;</span> b)) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> b
+foldr f z xs <span class="fu">=</span> appEndo (foldComposing f xs) z</code></pre></div>
+</div>
+<div id="foldable-4" class="slide section level1">
+<h1>Foldable</h1>
+<ul>
+<li>Finally, the class for foldable is (with most methods omitted):</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Foldable</span> t <span class="kw">where</span>
+  <span class="co">-- You only have to defined fold or foldMap</span>
+<span class="ot">  fold ::</span> <span class="dt">Monoid</span> m <span class="ot">=&gt;</span> t m <span class="ot">-&gt;</span> m
+  fold <span class="fu">=</span> foldMap id
+
+<span class="ot">  foldMap ::</span> <span class="dt">Monoid</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m) <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> m
+  foldMap f <span class="fu">=</span> foldr (mappend <span class="fu">.</span> f) mempty
+
+<span class="ot">  foldr ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> b
+  foldr f z t <span class="fu">=</span> appEndo (foldMap (<span class="dt">Endo</span> <span class="fu">.</span> f) t) z
+  <span class="co">-- lots of methods ...</span></code></pre></div>
+<ul>
+<li>Some properties of <code>foldMap</code></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">foldMap (g <span class="fu">.</span> f)    <span class="fu">=</span> g <span class="fu">.</span> foldMap f
+foldMap f          <span class="fu">=</span> fold <span class="fu">.</span> fmap f
+foldMap g <span class="fu">.</span> fmap f <span class="fu">=</span> foldMap (g <span class="fu">.</span> f) <span class="fu">=</span> g <span class="fu">.</span> foldMap f</code></pre></div>
+</div>
+<div id="foldable-5" class="slide section level1">
+<h1>Foldable</h1>
+<ul>
+<li>Some more instances of <code>Foldable</code>:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Foldable</span> [] <span class="kw">where</span>
+  foldMap f <span class="fu">=</span> mconcat <span class="fu">.</span> fmap f</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Foldable</span> <span class="dt">Maybe</span> <span class="kw">where</span>
+  foldMap f <span class="dt">Nothing</span>  <span class="fu">=</span> mempty
+  foldMap f (<span class="dt">Just</span> x) <span class="fu">=</span> f x</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Foldable</span> (<span class="dt">Either</span> a) <span class="kw">where</span>
+  foldMap _ (<span class="dt">Left</span> _)  <span class="fu">=</span> mempty
+  foldMap f (<span class="dt">Right</span> y) <span class="fu">=</span> f y</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Foldable</span> ((,) a) <span class="kw">where</span>
+  foldMap f (_, y) <span class="fu">=</span> f y</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Foldable</span> <span class="dt">Sum</span> <span class="kw">where</span>
+  foldMap f <span class="fu">=</span> f <span class="fu">.</span> getSum <span class="co">-- actually implemented using coerce</span></code></pre></div>
+</div>
+<div id="traversable" class="slide section level1">
+<h1>Traversable</h1>
+<ul>
+<li><p>To traverse means to walk across, and that is exactly what Traversable generalises:</p>
+<ul>
+<li><strong>walking across a structure, collecting results at each stop</strong></li>
+</ul></li>
+<li><p>But walking is what habe been already doing with Functor and Foldable:</p>
+<ul>
+<li>fmap f walks across the list, applies f to each element and collects the results by rebuilding the list</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> [] <span class="kw">where</span>
+    fmap _ []     <span class="fu">=</span> []
+    fmap f (x<span class="fu">:</span>xs) <span class="fu">=</span> f x <span class="fu">:</span> fmap f xs</code></pre></div>
+<ul>
+<li>foldMap f walks across the list, applies f to each element and collects the results by combining them with mappend</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Foldable</span> [] <span class="kw">where</span>
+    foldMap _ []     <span class="fu">=</span> mempty
+    foldMap f (x<span class="fu">:</span>xs) <span class="fu">=</span> f x <span class="fu">&lt;&gt;</span> foldMap f xs</code></pre></div></li>
+<li><p>However, Functor and Foldable are not enough to express all useful ways of traversing.</p></li>
+</ul>
+</div>
+<div id="traversable-1" class="slide section level1">
+<h1>Traversable</h1>
+<ul>
+<li>For instance, suppose we have the following Maybe-encoded test for negative numbers ...</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">deleteIfNegative ::</span> (<span class="dt">Num</span> a, <span class="dt">Ord</span> a) <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a
+deleteIfNegative x <span class="fu">=</span> <span class="kw">if</span> x <span class="fu">&lt;</span> <span class="dv">0</span> <span class="kw">then</span> <span class="dt">Nothing</span> <span class="kw">else</span> <span class="dt">Just</span> x</code></pre></div>
+<ul>
+<li>... and we want to use it to implement</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">rejectWithNegatives ::</span> (<span class="dt">Num</span> a, <span class="dt">Ord</span> a) <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> [a]</code></pre></div>
+<ul>
+<li><p>... which gives back the original list wrapped in Just if there are no negative elements in it, and Nothing otherwise.</p></li>
+<li><p>Neither Foldable nor Functor on their own would help:</p>
+<ul>
+<li><p>Using Foldable would replace the structure of the original list with that of whatever Monoid we pick for folding (and there is no way of twisting that into giving either the original list or Nothing)</p></li>
+<li><p>Using Functor would get a list of Maybes (but we have to get a Maybe of a list)</p></li>
+</ul></li>
+</ul>
+</div>
+<div id="traversable-2" class="slide section level1">
+<h1>Traversable</h1>
+<ul>
+<li><p><strong>But then we have to turn a list of maybes in a maybe of a list</strong></p></li>
+<li><p>This looks like a fold but</p>
+<ul>
+<li><p>instead of merely combining the values and destroying the list</p></li>
+<li><p>we need to combine the Maybe contexts of the values and recreate the list structure __within the combined <strong>context</strong></p></li>
+</ul></li>
+<li><p>Fortunately, there is a type class which is essentially about combining Functor contexts: <strong>Applicative</strong> !!!</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> (<span class="dt">Functor</span> t, <span class="dt">Foldable</span> t) <span class="ot">=&gt;</span> <span class="dt">Traversable</span> t <span class="kw">where</span>
+<span class="ot">  traverse  ::</span> (<span class="dt">Applicative</span> f) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> f (t b)
+  traverse f <span class="fu">=</span> sequenceA <span class="fu">.</span> fmap f
+
+<span class="ot">  sequenceA ::</span> (<span class="dt">Applicative</span> f) <span class="ot">=&gt;</span> t (f a) <span class="ot">-&gt;</span> f (t a)
+  sequenceA <span class="fu">=</span> traverse id</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Traversable</span> [] <span class="kw">where</span>
+  traverse _ []     <span class="fu">=</span> pure []
+  traverse f (x<span class="fu">:</span>xs) <span class="fu">=</span> (<span class="fu">:</span>) <span class="fu">&lt;$&gt;</span> f x <span class="fu">&lt;*&gt;</span> traverse f xs
+  <span class="co">-- traverse f = foldr (\x v -&gt; (:) &lt;$&gt; f x &lt;*&gt; v) (pure [])</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">rejectWithNegatives ::</span> (<span class="dt">Num</span> n, <span class="dt">Ord</span> n) <span class="ot">=&gt;</span> [n] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> [n]
+rejectWithNegatives <span class="fu">=</span> traverse deleteIfNegative</code></pre></div>
+</div>
+<div id="traversable-3" class="slide section level1">
+<h1>Traversable</h1>
+<h2 id="laws-4">Laws</h2>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">traverse <span class="dt">Identity</span> <span class="fu">=</span> <span class="dt">Identity</span>                                               <span class="co">-- identity</span>
+traverse (<span class="dt">Compose</span> <span class="fu">.</span> fmap g <span class="fu">.</span> f) <span class="fu">=</span> <span class="dt">Compose</span> <span class="fu">.</span> fmap (traverse g) <span class="fu">.</span> traverse f <span class="co">-- composition</span></code></pre></div>
+<ul>
+<li><p>The identity law says that all traversing with the Identity constructor does is wrap the structure with Identity</p></li>
+<li><p>The composition law states that it doesn't matter whether we perform two traversals separately (right side) or compose them in order to walk across the structure only once (left side)</p></li>
+<li><p>By the way: the composition of functors is a functor; and the composition of applicative is applicative.</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Compose</span> f g a <span class="fu">=</span> <span class="dt">Compose</span> {<span class="ot"> getCompose ::</span> f (g a) }
+
+<span class="kw">instance</span> (<span class="dt">Functor</span> f, <span class="dt">Functor</span> g) <span class="ot">=&gt;</span> <span class="dt">Functor</span> (<span class="dt">Compose</span> f g) <span class="kw">where</span>
+  fmap f (<span class="dt">Compose</span> x) <span class="fu">=</span> <span class="dt">Compose</span> (fmap (fmap f) x)
+
+<span class="kw">instance</span> (<span class="dt">Applicative</span> f, <span class="dt">Applicative</span> g) <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">Compose</span> f g) <span class="kw">where</span>
+  pure x                  <span class="fu">=</span> <span class="dt">Compose</span> (pure (pure x))
+  <span class="dt">Compose</span> f <span class="fu">&lt;*&gt;</span> <span class="dt">Compose</span> x <span class="fu">=</span> <span class="dt">Compose</span> ((<span class="fu">&lt;*&gt;</span>) <span class="fu">&lt;$&gt;</span> f <span class="fu">&lt;*&gt;</span> x)</code></pre></div>
+</div>
+<div id="traversable-4" class="slide section level1">
+<h1>Traversable</h1>
+<h2 id="recovering-fmap-and-foldmap">Recovering fmap and foldMap</h2>
+<ul>
+<li><p>We still have not justified the Functor and Foldable class constraints of Traversable</p></li>
+<li><p>As long as the Traversable instance follows the laws traverse is enough to implement both fmap and foldMap</p></li>
+<li><p>For fmap, all we need is to use Identity to make a traversal out of an arbitrary function:</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmapDefault <span class="fu">:.</span> <span class="dt">Traversable</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b
+fmapDefault f <span class="fu">=</span> runIdentity <span class="fu">.</span> traverse (<span class="dt">Identity</span> <span class="fu">.</span> f)</code></pre></div>
+<ul>
+<li>To recover foldMap, we need to use another applicative: Const</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">foldMapDefault ::</span> (<span class="dt">Traversable</span> t, <span class="dt">Monoid</span> m) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m) <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> m
+foldMapDefault f <span class="fu">=</span> getConst <span class="fu">.</span> traverse (<span class="dt">Const</span> <span class="fu">.</span> f)</code></pre></div>
+<ul>
+<li><p>We have just recovered from traverse two functions which on the surface appear to be entirely different</p>
+<ul>
+<li>All we had to do was pick two different functors : <strong>that is a taste of how powerful an abstraction functors are !!!</strong></li>
+</ul></li>
+</ul>
+</div>
+<div id="examples" class="slide section level1">
+<h1>Examples</h1>
+<h2 id="functor-pure-vs.-foldable-monoidal-vs.-traversable-effect">Functor (pure) vs. Foldable (monoidal) vs. Traversable (effect)</h2>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="co">-- Values of function are treated as simple values</span>
+<span class="co">-- Initial list structure is conserved in result</span>
+ghci<span class="fu">&gt;</span><span class="ot"> fmap ::</span> (<span class="dt">Functor</span> f) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b
+ghci<span class="fu">&gt;</span> fmap (\n <span class="ot">-&gt;</span> [<span class="dv">1</span> <span class="fu">..</span> n]) [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>] 
+[[<span class="dv">1</span>],[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]]</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="co">-- Values of function are accumulated using the monoid </span>
+<span class="co">-- Result is the accumulated value and initial list structure is lost</span>
+ghci<span class="fu">&gt;</span><span class="ot"> foldMap ::</span> (<span class="dt">Foldable</span> f,  <span class="dt">Monoid</span> m) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> m
+ghci<span class="fu">&gt;</span> foldMap (\n <span class="ot">-&gt;</span> [<span class="dv">1</span> <span class="fu">..</span> n]) [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>] 
+[<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="co">-- Values of function represents effects (nondeterminism)</span>
+<span class="co">-- Result is an nondeterministic value of same structure as initial list</span>
+<span class="co">-- So the initial list structure is conserved in result</span>
+ghci<span class="fu">&gt;</span><span class="ot"> traverse ::</span> (<span class="dt">Traversable</span> t, <span class="dt">Applicative</span> f) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> f (t b)
+ghci<span class="fu">&gt;</span> traverse (\n <span class="ot">-&gt;</span> [<span class="dv">1</span> <span class="fu">..</span> n]) [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>] 
+[[<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">1</span>],[<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">3</span>],[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">1</span>],[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>],[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]]</code></pre></div>
+</div>
+<div id="examples-1" class="slide section level1">
+<h1>Examples</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Tree</span> a <span class="fu">=</span> <span class="dt">Leaf</span> <span class="fu">|</span> <span class="dt">Node</span> (<span class="dt">Tree</span> a) a (<span class="dt">Tree</span> a) <span class="kw">deriving</span> <span class="dt">Show</span></code></pre></div>
+<ul>
+<li><code>fmap</code> recreates the structure changing the values</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Tree</span> <span class="kw">where</span> <span class="co">-- g :: a -&gt; b</span>
+  fmap _ <span class="dt">Leaf</span>           <span class="fu">=</span> <span class="dt">Leaf</span>
+  fmap g (<span class="dt">Node</span> lt a rt) <span class="fu">=</span> <span class="dt">Node</span> (fmap g lt) (g a) (fmap g rt)</code></pre></div>
+<ul>
+<li><code>foldMap</code> squashes the structure with the rules given by <code>Monoid m</code></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Foldable</span> <span class="dt">Tree</span> <span class="kw">where</span> <span class="co">-- g :: Monoid m =&gt; a -&gt; m</span>
+  foldMap g <span class="dt">Leaf</span>           <span class="fu">=</span> mempty
+  foldMap g (<span class="dt">Node</span> lt a rt) <span class="fu">=</span> foldMap g lt <span class="fu">&lt;&gt;</span> g a <span class="fu">&lt;&gt;</span> foldMap g rt</code></pre></div>
+<ul>
+<li><code>traverse</code> recreates the structure inside the context given by <code>Applicative f</code> (can do both)</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Traversable</span> <span class="dt">Tree</span> <span class="kw">where</span> <span class="co">-- g :: Applicative f =&gt; (a -&gt; f b) </span>
+  traverse g <span class="dt">Leaf</span>           <span class="fu">=</span> pure <span class="dt">Leaf</span>
+  traverse g (<span class="dt">Node</span> lt a rt) <span class="fu">=</span> <span class="dt">Node</span> <span class="fu">&lt;$&gt;</span> traverse g lt <span class="fu">&lt;*&gt;</span> g a <span class="fu">&lt;*&gt;</span> traverse g rt</code></pre></div>
+</div>
+<div id="bibliography" class="slide section level1">
+<h1>Bibliography</h1>
+<ul>
+<li><p><a href="https://en.wikibooks.org/wiki/Haskell">Haskell Wikibook</a></p></li>
+<li><p><a href="https://wiki.haskell.org/Typeclassopedia">Typeclassopedia</a></p></li>
+<li><p><a href="http://learnyouahaskell.com/chapters">Learn You a Haskell for Great Good!</a></p></li>
+<li><p><a href="http://book.realworldhaskell.org/read/">Real World Haskell</a></p></li>
+<li><p><a href="https://doi.org/10.1017/S0956796807006326">Connor McBride and Ross Paterson, &quot;Applicative Programming with Effects&quot;, Journal of Functional Programming, 18:1, pp1-13 (2008)</a></p></li>
+<li><p><a href="https://doi.org/10.1017/S0956796809007291">Jeremy Gibbons and Bruno C. d. S. Oliveira, &quot;The Essence of the Iterator Pattern&quot;, Journal of Functional Programming, 19:3-4, pp377-402 (2009)</a></p></li>
+</ul>
+</div>
+</body>
+</html>

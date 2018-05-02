@@ -1,6 +1,6 @@
 % Typeclassopedia (first step in the path to lenses)
 % Juan Manuel Gimeno
-% 25 April 2018
+% 25 April / 2 May 2018
 
 Index
 =====
@@ -703,3 +703,10 @@ Bibliography
 * [Learn You a Haskell for Great Good!](http://learnyouahaskell.com/chapters)
 
 * [Real World Haskell](http://book.realworldhaskell.org/read/)
+
+* [Connor McBride and Ross Paterson, "Applicative Programming with Effects", Journal of Functional Programming, 18:1, pp1-13 (2008)](https://doi.org/10.1017/S0956796807006326)
+
+* [Jeremy Gibbons and Bruno C. d. S. Oliveira, "The Essence of the Iterator Pattern", Journal of Functional Programming, 19:3-4, pp377-402 (2009)](https://doi.org/10.1017/S0956796809007291)
+
+
+
