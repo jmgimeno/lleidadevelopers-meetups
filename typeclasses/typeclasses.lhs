@@ -515,7 +515,7 @@ Traversable
 
     - __walking across a structure, collecting results at each stop__
 
-* But walking is what habe been already doing with Functor and Foldable:
+* But walking is what have been already doing with Functor and Foldable:
 
     - fmap f walks across the list, applies f to each element and collects the results by rebuilding the list
 
