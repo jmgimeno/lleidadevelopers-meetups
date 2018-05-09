@@ -1,6 +1,6 @@
 % RankNTypes (second step in the path to lenses)
-% Juan Manuel Gimeno
-% 2 May 2018
+% Juan Manuel Gimeno Illa
+% 9 May 2018
 
 Index
 =====
@@ -13,14 +13,16 @@ Index
 Language extensions
 ===================
 
-* Haskell is a __well defined__ Language
+* Haskell is defined (althought not formally) in
 
     - [Haskell '98 Report](https://www.haskell.org/onlinereport/)
     - [Haskell 2010 Report](https://www.haskell.org/onlinereport/haskell2010/)
 
 * But Haskell was meant to be a playground for experimenting with new functional constructs
 
-* So GHC embraced the notion of extensions: opt-in functionality that gives the user even more tools when writing their programs
+* So GHC embraced the notion of extensions: 
+
+    * opt-in functionality that gives the user even more tools when writing their programs
 
 * The extension that we'll need to use for representing lenses is one that allows __higher rank polymorphism__:
 
@@ -42,14 +44,14 @@ Monomorphism
 > intId :: Integer -> Integer
 > intId x = x
 
-* `intId` is a fully defined value (a function) od a fully defined type `Integer -> Integer`
+* `intId` is a fully defined value (a function) of a fully defined type `Integer -> Integer`
 
 > doubleId :: Double -> Double
 > doubleId x = x
 
-* This is a complete different value of a completely different types
+* This is a complete different value of a completely different type
 
-    - But their definitions are exactly the same?
+    - __But their definitions are exactly the same !!????__
 
 Polymorphism
 ============
@@ -59,28 +61,24 @@ Polymorphism
 > id :: a -> a
 > id x = x
 
-* The definition is still the same
-
 * This kind of polymorphism is called __parametric polimorphism__ (in other languages known as _generics_)
 
-* __Haskell will only allow this if there is indeed a single definition__
+* Haskell will only allow this if there is indeed a __single definition__
 
     * You cannot choose the defintion based on its type
 
 * It also adds safety through a property called __parametricity__:
 
-    * If we pretend there are no loops or exceptions, then the function __fully determined__ by its type.
+    * If we pretend there are no loops or exceptions, then the `id` function is __fully determined__ by its type.
 
     * So, if we see the type `a -> a` it must be the identity function !!!
 
 Rank-1 polymorphism
 ===================
 
-* Usuelly the cal `id` __the identity function__ but in fact we should think of it as a __whole family of functions__
+* Usually we calll `id` __the identity function__ but in fact we should think of it as a __whole family of functions__
 
-    * we should really say there is a function __for all__ types a
-
-    * that is, for every type `a`, there is and identity function called `id`, which is of type `a -> a`
+    * that is, __for all__ type `a`, there is and identity function called `id`, which is of type `a -> a`
 
 * This is the view of the type-checker and by turning the `RankNtypes` extension we can be explicit about it
 
@@ -109,18 +107,18 @@ Rank-1 polymorphism
 
 < print (id (3 :: Integer), id "blah")
 
-* Another way to look at it is in terms of __promise and demand__
+* Another way to look at it is in terms of __promise__ and __demand__
 
     - the __type signature__ of `id` __promises__ that the definition works __for all types__
 
-    - when you actually __apply__ the function you __demand a certain type__
+    - when you actually __apply__ the function to a value, you __demand for a certain type__
 
-    - This interpretation will be very useful when we move to higher-rank polymorphism
+* This interpretation will be very useful when we move to higher-rank polymorphism
 
 Rank-2 and higher polymorphism
 ==============================
 
-* Let's us the explicitness of the quantifier in a type alias
+* Let's use the explicitness of the quantifier in a type alias
 
 > type IdFunc = forall a. a -> a
 
@@ -135,29 +133,30 @@ id x = x
 
 > someInt :: IdFunc -> Integer
 
-* Since any value of type `IdFunc` must be the identity funcion, `someInt` is a function which expects the identity function as its argument and returns an Integer
+* Since any value of type `IdFunc` must be the identity function, `someInt` is a function which expects the identity function as its argument and returns an Integer
 
-* Let's give it some _arbitray_ definition
+* Let's give it some _arbitrary_ definition
 
 > someInt id' = id' 3
 
 Rank-2 and higher polymorphism
 ==============================
 
-* Let's give it some _arbitrary_ definition
+```haskell
+someInt :: IdFunc -> Integer
+someInt id' = id' 3
+```
 
-> someInt id' = id' 3
-
-* This is something new that we didn’t have before !!!!
+* This is __something new__ that we didn’t have before !!!!
 
     - `someInt` has received a function `id'` about which it knows that it is the fully fledged polymorphic identity function
     - so __it can instantiate its type variable as it likes__, and it does so.
 
 * The someInt function isn’t even polymorphic !!!!
 
-    - rather it expects a polymorphic function as its argument
+    - rather it __demands__ a polymorphic function as its argument
 
-* Let's expand the definition of `IdFunc` to make this much clearer:
+* Let's expand the type of `IdFunc` to make this much clearer:
 
 ```haskell
 someInt :: (forall a. a -> a) -> Integer
@@ -172,11 +171,11 @@ someInt :: (forall a. a -> a) -> Integer
 
 * This function is completely __monomorphic__ (its type is not quantified)
 
-* When we apply a polymorphic function like `id` we get to choose which types to instantiate
+    - When we apply a polymorphic function like `id` we get to choose which types to instantiate
 
-* The someInt function does not give us such a choice
+    - The someInt function does not give us such a choice
 
-    - In fact it __requires us__ to pass a sufficiently polymorphic function to it such that it can make that choice
+    - In fact it __demands us__ to pass a sufficiently polymorphic function to it such that it can make that choice
 
     - When we __apply__ it, we need to __give it choice__
 
@@ -202,7 +201,9 @@ Rank-2 and higher polymorphism
 
 * This function is __rank-3 polymorphic__
 
-> someOtherInt :: ((forall a. a -> a) -> Integer) -> Integer
+```haskell
+someOtherInt :: ((forall a. a -> a) -> Integer) -> Integer
+```
 
 RankNTypes and Lenses
 =====================
