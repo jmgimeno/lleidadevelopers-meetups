@@ -1,5 +1,5 @@
-% Introduction to Lenses
-% Juan Manuel Gimeno
+% Notes on "Lenses: compositional data access and manipulation" by Simon Peyton-Jones
+% Juan Manuel Gimeno Illa
 % 9 May 2018
 
 Disclaimer
@@ -7,7 +7,7 @@ Disclaimer
 
 * These are my notes of the presentation [Lenses: compositional data access and manipulation](https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation) by Simon Peyton-Jones (09/10/2013)
 
-* I ask you to watch its presentation: it's brilliant.
+* I ask you to watch his presentation: IT'S BRILLIANT !!!
 
 The Basic Idea
 ==============
@@ -73,11 +73,11 @@ If we had that...
 =================
 
 > setPostcode :: String -> Person -> Person
-> setPostcode pc p = set (laddr `composeL`lpostcode) pc p
+> setPostcode pc p = set (laddr `composeL` lpostcode) pc p
 
-* (it is a composite lens)
+* It is a composite lens !!!
 
-* More useful way to compose !!!
+* By the way, __composition is the key of good programming & design__
 
 The obvious first attempt
 =========================
@@ -87,7 +87,8 @@ The obvious first attempt
 > data LensR s a = L { viewR :: s -> a
 >                    , setR  :: a -> s -> s 
 >                    }
-> 
+>
+> composeL LensR s b -> LensR b a -> LensR s a
 > composeL (L v1 u1) (L v2 u2)
 >   = L (\s -> v2 (v1 s))
 >       (\a s -> u1 (u2 a (v1 s)) s)
@@ -100,7 +101,7 @@ The obvious first attempt
 
 * Doing view then update is Not Cool
 
-* You could add a mofify method... but...
+    - You could add a mofify method... but...
 
 Inflexible
 ==========
@@ -109,7 +110,7 @@ Inflexible
 
 > modifyM :: LensR s a -> (a -> Maybe a) -> s -> Maybe s
 
-* Or that are effect-ful?
+* Or that is effectful?
 
 > modifyIO :: LensR s a -> (a -> IO a) -> s -> IO s
 
@@ -134,20 +135,11 @@ Inflexible?
 >                    , modF  :: Functor f => (a -> f a) -> s -> f s 
 >                    }
 
-...and that is a REALLY good idea !!!
-
-* Remember Functor
+...and that is a __REALLY GOOD__ idea !!!
 
 > class Functor f where
 >   fmap :: (a -> b) -> f a -> f b
 > 
-> instance Functor Maybe where
->   fmap _ Nothing = Nothing
->   fmap f (Just x) = Just (f x)
-> 
-> instance Functor [] where
->   fmap _ [] = []
->   fmap f (x:xs) = f x : fmap f xs
 
 * The magic moment happens when someone realizes that we can do all of them with only modF !!!
 

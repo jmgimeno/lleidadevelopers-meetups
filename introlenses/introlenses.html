@@ -1,0 +1,754 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Juan Manuel Gimeno Illa" />
+  <title>Notes on &quot;Lenses: compositional data access and manipulation&quot; by Simon Peyton-Jones</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <link rel="stylesheet" type="text/css" media="screen, projection, print"
+    href="http://www.w3.org/Talks/Tools/Slidy2/styles/slidy.css" />
+  <script src="http://www.w3.org/Talks/Tools/Slidy2/scripts/slidy.js"
+    charset="utf-8" type="text/javascript"></script>
+</head>
+<body>
+<div class="slide titlepage">
+  <h1 class="title">Notes on &quot;Lenses: compositional data access and manipulation&quot; by Simon Peyton-Jones</h1>
+  <p class="author">
+Juan Manuel Gimeno Illa
+  </p>
+  <p class="date">9 May 2018</p>
+</div>
+<div id="disclaimer" class="slide section level1">
+<h1>Disclaimer</h1>
+<ul>
+<li><p>These are my notes of the presentation <a href="https://skillsmatter.com/skillscasts/4251-lenses-compositional-data-access-and-manipulation">Lenses: compositional data access and manipulation</a> by Simon Peyton-Jones (09/10/2013)</p></li>
+<li><p>I ask you to watch his presentation: IT'S BRILLIANT !!!</p></li>
+</ul>
+</div>
+<div id="the-basic-idea" class="slide section level1">
+<h1>The Basic Idea</h1>
+<ul>
+<li>A lens provides access into the middle of a data structure, or container</li>
+<li>Access = read, write, modify, (later) fold, traverse, etc</li>
+<li>A lens is a first-class value, with a type <code class="sourceCode haskell"><span class="dt">Lens&#39;</span> s a</code>
+<ul>
+<li><code>s</code>: type of the container</li>
+<li><code>a</code>: type of the focus</li>
+</ul></li>
+<li>Eg <code class="sourceCode haskell"><span class="dt">Lens&#39;</span> <span class="dt">DateTime</span> <span class="dt">Mins</span></code> or <code class="sourceCode haskell"><span class="dt">Lens&#39;</span> <span class="dt">DateTime</span> <span class="dt">Hours</span></code></li>
+<li>Lenses compose:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot"> composeL ::</span> <span class="dt">Lens&#39;</span> s1 s2
+          <span class="ot">-&gt;</span> <span class="dt">Lens&#39;</span> s2 a
+          <span class="ot">-&gt;</span> <span class="dt">Lens&#39;</span> s1 a</code></pre></div>
+</div>
+<div id="why-do-we-want-that" class="slide section level1">
+<h1>Why do we want that?</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Person</span> <span class="fu">=</span> <span class="dt">P</span> {<span class="ot"> name ::</span> <span class="dt">String</span>
+                ,<span class="ot"> addr ::</span> <span class="dt">Address</span>
+                ,<span class="ot"> salary ::</span> <span class="dt">Int</span> 
+                }
+
+ 
+<span class="kw">data</span> <span class="dt">Address</span> <span class="fu">=</span> <span class="dt">A</span> {<span class="ot"> road ::</span> <span class="dt">String</span>
+                 ,<span class="ot"> city ::</span> <span class="dt">String</span>
+                 ,<span class="ot"> postcode ::</span> <span class="dt">String</span> 
+                 }
+
+<span class="co">--addr :: Person -&gt; Address</span>
+
+<span class="ot">setName ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Person</span> <span class="ot">-&gt;</span> <span class="dt">Person</span>
+setName n p <span class="fu">=</span> p { name <span class="fu">=</span> n }
+
+<span class="ot">setPostcode ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Person</span> <span class="ot">-&gt;</span> <span class="dt">Person</span>
+setPostcode pc p <span class="fu">=</span> p { addr <span class="fu">=</span> addr p { postcode <span class="fu">=</span> pc } }</code></pre></div>
+<ul>
+<li>This sort of code gets tiresome very fast</li>
+</ul>
+</div>
+<div id="what-we-want" class="slide section level1">
+<h1>What we want</h1>
+<ul>
+<li>A lens for each field</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">lname     ::</span> <span class="dt">Lens&#39;</span> <span class="dt">Person</span> <span class="dt">String</span>
+<span class="ot">laddr     ::</span> <span class="dt">Lens&#39;</span> <span class="dt">Person</span> <span class="dt">Address</span>
+<span class="ot">lsalary   ::</span> <span class="dt">Lens&#39;</span> <span class="dt">Person</span> <span class="dt">Int</span>
+<span class="ot">lroad     ::</span> <span class="dt">Lens&#39;</span> <span class="dt">Address</span> <span class="dt">String</span>
+<span class="ot">lcity     ::</span> <span class="dt">Lens&#39;</span> <span class="dt">Address</span> <span class="dt">String</span>
+<span class="ot">lpostcode ::</span> <span class="dt">Lens&#39;</span> <span class="dt">Address</span> <span class="dt">String</span></code></pre></div>
+<ul>
+<li>A way to use the lens to get and update</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">view ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> a
+<span class="ot">set  ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s</code></pre></div>
+<ul>
+<li>A way to compose lenses</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">composeL ::</span> <span class="dt">Lens&#39;</span> s1 s2 <span class="ot">-&gt;</span> <span class="dt">Lens&#39;</span> s2 a <span class="ot">-&gt;</span> <span class="dt">Lens&#39;</span> s1 a</code></pre></div>
+</div>
+<div id="if-we-had-that..." class="slide section level1">
+<h1>If we had that...</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">setPostcode ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Person</span> <span class="ot">-&gt;</span> <span class="dt">Person</span>
+setPostcode pc p <span class="fu">=</span> set (laddr <span class="ot">`composeL`</span> lpostcode) pc p</code></pre></div>
+<ul>
+<li><p>It is a composite lens !!!</p></li>
+<li><p>By the way, <strong>composition is the key of good programming &amp; design</strong></p></li>
+</ul>
+</div>
+<div id="the-obvious-first-attempt" class="slide section level1">
+<h1>The obvious first attempt</h1>
+<ul>
+<li>A lens is just a record with a getter and a setter</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">LensR</span> s a <span class="fu">=</span> <span class="dt">L</span> {<span class="ot"> viewR ::</span> s <span class="ot">-&gt;</span> a
+                   ,<span class="ot"> setR  ::</span> a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s 
+                   }
+
+composeL <span class="dt">LensR</span> s b <span class="ot">-&gt;</span> <span class="dt">LensR</span> b a <span class="ot">-&gt;</span> <span class="dt">LensR</span> s a
+composeL (<span class="dt">L</span> v1 u1) (<span class="dt">L</span> v2 u2)
+  <span class="fu">=</span> <span class="dt">L</span> (\s <span class="ot">-&gt;</span> v2 (v1 s))
+      (\a s <span class="ot">-&gt;</span> u1 (u2 a (v1 s)) s)</code></pre></div>
+<ul>
+<li>This works, but...</li>
+<li>Inefficient. Suppose you want to modify a field, this</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">over ::</span> <span class="dt">LensR</span> s a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s
+over ln f s <span class="fu">=</span> setR ln (f (viewR ln s)) s</code></pre></div>
+<ul>
+<li><p>Doing view then update is Not Cool</p>
+<ul>
+<li>You could add a mofify method... but...</li>
+</ul></li>
+</ul>
+</div>
+<div id="inflexible" class="slide section level1">
+<h1>Inflexible</h1>
+<ul>
+<li>What about a modification that might fail?</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">modifyM ::</span> <span class="dt">LensR</span> s a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> <span class="dt">Maybe</span> s</code></pre></div>
+<ul>
+<li>Or that is effectful?</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">modifyIO ::</span> <span class="dt">LensR</span> s a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">IO</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> <span class="dt">IO</span> s</code></pre></div>
+<ul>
+<li>Each one seems to require a new function... that we can add to the record</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">LensR</span> s a <span class="fu">=</span> <span class="dt">L</span> {<span class="ot"> viewR ::</span> s <span class="ot">-&gt;</span> a
+                   ,<span class="ot"> setR  ::</span> a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s
+                   ,<span class="ot"> mod   ::</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s
+                   ,<span class="ot"> modM  ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> <span class="dt">Maybe</span> s
+                   ,<span class="ot"> modIO ::</span> (a <span class="ot">-&gt;</span> <span class="dt">IO</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> <span class="dt">IO</span> s 
+                   }</code></pre></div>
+</div>
+<div id="inflexible-1" class="slide section level1">
+<h1>Inflexible?</h1>
+<ul>
+<li>But those modifications are similar</li>
+<li>Maybe we can unify them</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">LensR</span> s a <span class="fu">=</span> <span class="dt">L</span> {<span class="ot"> viewR ::</span> s <span class="ot">-&gt;</span> a
+                   ,<span class="ot"> setR  ::</span> a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s
+                   ,<span class="ot"> mod   ::</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s
+                   ,<span class="ot"> modF  ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s 
+                   }</code></pre></div>
+<p>...and that is a <strong>REALLY GOOD</strong> idea !!!</p>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="kw">where</span>
+<span class="ot">  fmap ::</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
+<ul>
+<li>The magic moment happens when someone realizes that we can do all of them with only modF !!!</li>
+</ul>
+</div>
+<div id="one-function-to-rule-them-all" class="slide section level1">
+<h1>One function to rule them all</h1>
+<ul>
+<li><p>Twan van Laarhoven's <a href="CPS%20based%20functional%20references">CPS Functional References</a></p></li>
+<li><p>Edward Kmett's <a href="https://hackage.haskell.org/package/lens">Lens package</a></p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> forall f <span class="fu">.</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s</code></pre></div>
+<ul>
+<li>WTF ?</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">LensR</span> s a <span class="fu">=</span> <span class="dt">L</span> {<span class="ot"> viewR ::</span> s <span class="ot">-&gt;</span> a
+                   ,<span class="ot"> setR  ::</span> a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s 
+                   }</code></pre></div>
+<ul>
+<li><p>It's going to turn out that:</p></li>
+<li><p><code class="sourceCode haskell"><span class="dt">Lens&#39;</span></code> and <code class="sourceCode haskell"><span class="dt">LensR</span></code> are isomorphic</p>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">lensToLensR ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> <span class="dt">LensR</span> s a
+<span class="ot">lensRToLens ::</span> <span class="dt">LensR</span> s a <span class="ot">-&gt;</span> <span class="dt">Lens&#39;</span> s a</code></pre></div></li>
+<li><p>But <code class="sourceCode haskell"><span class="dt">Lens&#39;</span></code> is better</p></li>
+</ul>
+</div>
+<div id="how-are-we-going-to-do-the-set" class="slide section level1">
+<h1>How are we going to do the set?</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> forall f <span class="fu">.</span> <span class="dt">Functor</span> f
+                        <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s
+<span class="kw">data</span> <span class="dt">LensR</span> s a <span class="fu">=</span> <span class="dt">L</span> {<span class="ot"> viewR ::</span> s <span class="ot">-&gt;</span> a
+                   ,<span class="ot"> setR  ::</span> a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s }
+
+<span class="ot">set ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s)
+set ln a s <span class="fu">=</span> <span class="fu">...</span>   <span class="co">-- ln returns a value of type f s</span>
+                   <span class="co">-- but we want a value of type s</span></code></pre></div>
+<ul>
+<li>The way to fet from (f s) to s is to choose the Identity Functor as f</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Identity</span> a <span class="fu">=</span> <span class="dt">Identity</span> a
+
+<span class="ot">runIdentity ::</span> <span class="dt">Identity</span> a <span class="ot">-&gt;</span> a
+runIdentity (<span class="dt">Identity</span> x) <span class="fu">=</span> x
+
+<span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Identity</span> <span class="kw">where</span>
+  fmap f (<span class="dt">Identity</span> x) <span class="fu">=</span> <span class="dt">Identity</span> (f x)
+
+<span class="ot">set ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s)
+set ln x s
+  <span class="fu">=</span> runIdentity (ln set_fld s)
+    <span class="kw">where</span><span class="ot"> set_fld ::</span> a <span class="ot">-&gt;</span> <span class="dt">Identity</span> a
+          set_fld _ <span class="fu">=</span> <span class="dt">Identity</span> x</code></pre></div>
+<p>That is, we discard current value and return new value x</p>
+<ul>
+<li>ln lifts set_fld :: a -&gt; Identity a to a function s -&gt; Identity s</li>
+<li><p>runIdentity removes the Identity constructor</p></li>
+<li><p>Or, as Edward Kmett would write it:</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">const<span class="ot"> ::</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> a
+const x _ <span class="fu">=</span> x
+
+<span class="ot">set ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s)
+set ln x <span class="fu">=</span> runIdentity <span class="fu">.</span> ln (<span class="dt">Identity</span> <span class="fu">.</span> const x)</code></pre></div>
+</div>
+<div id="and-in-the-same-spirit" class="slide section level1">
+<h1>And, in the same spirit</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">set ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s)
+set ln x <span class="fu">=</span> runIdentity <span class="fu">.</span> ln (<span class="dt">Identity</span> <span class="fu">.</span> const x)
+
+<span class="ot">over ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> a
+over ln f <span class="fu">=</span> runIdentity <span class="fu">.</span> ln (<span class="dt">Identity</span> <span class="fu">.</span> f)</code></pre></div>
+<p>Which is a lot more efficient than the get/set idea we hold before</p>
+</div>
+<div id="same-again...-using-a-lens-to-view" class="slide section level1">
+<h1>Same again... using a lens to view</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> forall f <span class="fu">.</span> <span class="dt">Functor</span> f
+                        <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s
+<span class="kw">data</span> <span class="dt">LensR</span> s a <span class="fu">=</span> <span class="dt">L</span> {<span class="ot"> viewR ::</span> s <span class="ot">-&gt;</span> a
+                   ,<span class="ot"> setR  ::</span> a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s }
+
+<span class="ot">view ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> a)
+view ln s <span class="fu">=</span> <span class="fu">...</span>      <span class="co">-- ln returns a value of type (f s)</span>
+                     <span class="co">-- but we want a value of type a</span>
+                     <span class="co">-- This looks harder !!!</span></code></pre></div>
+<ul>
+<li><p>The trick is to pack the a inside the f !!!</p></li>
+<li><p>(Const v) is a functor that ignores its argument a</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Const</span> v a <span class="fu">=</span> <span class="dt">Const</span> v
+
+<span class="ot">getConst ::</span> <span class="dt">Const</span> v a <span class="ot">-&gt;</span> v
+getConst (<span class="dt">Const</span> x) <span class="fu">=</span> x
+
+<span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">Const</span> v) <span class="kw">where</span>
+  fmap _ (<span class="dt">Const</span> x) <span class="fu">=</span> <span class="dt">Const</span> x
+
+<span class="ot">view ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> a)
+view ln s <span class="fu">=</span> getConst (ln <span class="dt">Const</span> s)</code></pre></div>
+<ul>
+<li><p>Here Const is, deduced by the type inferencer, a -&gt; Const a a</p></li>
+<li><p>Or, as Edward would write it:</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">view ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> a
+view ln <span class="fu">=</span> getConst <span class="fu">.</span> ln <span class="dt">Const</span></code></pre></div>
+</div>
+<div id="from-lens-to-lensr" class="slide section level1">
+<h1>From Lens to LensR</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Functor</span> f
+                        <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> f s)
+<span class="kw">data</span> <span class="dt">LensR</span> s a <span class="fu">=</span> <span class="dt">L</span> {<span class="ot"> viewR ::</span> s <span class="ot">-&gt;</span> a
+                   ,<span class="ot"> setR  ::</span> a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s }
+
+<span class="ot">view ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> a)
+view ln <span class="fu">=</span> getComst <span class="fu">.</span> ln <span class="dt">Const</span>
+
+<span class="ot">set ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s)
+view ln x <span class="fu">=</span> getId <span class="fu">.</span> ln (<span class="dt">Identity</span> <span class="fu">.</span> const x)
+
+<span class="ot">lensToLensR ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> <span class="dt">LensR</span> s a
+<span class="dt">LensToLensR</span> ln <span class="fu">=</span> <span class="dt">L</span> { viewR <span class="fu">=</span> view ln, setR <span class="fu">=</span> set ln }</code></pre></div>
+</div>
+<div id="exercise" class="slide section level1">
+<h1>Exercise</h1>
+<ul>
+<li>Write lensRToLens</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">lensRToLens ::</span> <span class="dt">LensR</span> s a <span class="ot">-&gt;</span> <span class="dt">Lens&#39;</span> s a
+lensRToLens <span class="fu">=</span> undefined</code></pre></div>
+</div>
+<div id="lets-create-a-lens" class="slide section level1">
+<h1>Let's create a Lens</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Functor</span> f
+                        <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> f s)
+
+<span class="kw">data</span> <span class="dt">Person</span> <span class="fu">=</span> <span class="dt">P</span> {<span class="ot"> _name ::</span> <span class="dt">String</span>,<span class="ot"> _salary ::</span> <span class="dt">Int</span> }
+
+<span class="ot">name ::</span> <span class="dt">Lens&#39;</span> <span class="dt">Person</span> <span class="dt">String</span>
+<span class="co">-- name :: Functor f =&gt; (String -&gt; f String)</span>
+<span class="co">--                    -&gt; Person -&gt; f Person</span>
+
+name elt_fn (<span class="dt">P</span> n s)
+  <span class="fu">=</span> fmap (\n&#39; <span class="ot">-&gt;</span> <span class="dt">P</span> n&#39; s) (elt_fn n)</code></pre></div>
+<ul>
+<li>elt_fn</li>
+<li>String -&gt; f String</li>
+<li><p>element function</p></li>
+<li>' -&gt; P n' s</li>
+<li>String -&gt; Person</li>
+<li>It's like a data structure with a hole in it</li>
+<li><p>It's the function that replaces the name of the given Person</p></li>
+<li>elt_fn n</li>
+<li><p>f String</p></li>
+<li><p>fmap is needed to go from f String to f Person given String -&gt; Person</p></li>
+<li><p>I can express it using &lt;$&gt; from Data.Functor</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">name elt_fn (<span class="dt">P</span> n s)  <span class="fu">=</span> (\n&#39; <span class="ot">-&gt;</span> <span class="dt">P</span> n&#39; s) <span class="fu">&lt;$&gt;</span> (elt_fn n)</code></pre></div>
+</div>
+<div id="using-lens" class="slide section level1">
+<h1>Using lens</h1>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> <span class="kw">let</span> fred <span class="fu">=</span> <span class="dt">P</span> { _name <span class="fu">=</span> <span class="st">&quot;Fred&quot;</span>, _salary <span class="fu">=</span> <span class="dv">100</span> }
+
+ghci<span class="fu">&gt;</span> view name fred
+<span class="st">&quot;Fred&quot;</span>
+
+ghci<span class="fu">&gt;</span> set name <span class="st">&quot;Bill&quot;</span> fred
+<span class="dt">P</span> { _name <span class="fu">=</span> <span class="st">&quot;Bill&quot;</span>, _salary <span class="fu">=</span> <span class="dv">100</span> }</code></pre></div>
+</div>
+<div id="how-on-earth-does-this-work" class="slide section level1">
+<h1>How on earth does this work?</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">view name (<span class="dt">P</span> { _name <span class="fu">=</span> <span class="st">&quot;Fred&quot;</span>, _salary <span class="fu">=</span> <span class="dv">100</span> })
+  <span class="co">-- inline view</span>
+<span class="fu">=</span> getConst (name <span class="dt">Const</span> (<span class="dt">P</span> { _name <span class="fu">=</span> <span class="st">&quot;Fred&quot;</span>, _salary <span class="fu">=</span> <span class="dv">100</span> }))
+  <span class="co">-- inline name</span>
+<span class="fu">=</span> getConst (fmap (\n&#39; <span class="ot">-&gt;</span> <span class="dt">P</span> n&#39; <span class="dv">100</span>) (<span class="dt">Const</span> <span class="st">&quot;Fred&quot;</span>))
+  <span class="co">-- fmap over Const</span>
+<span class="fu">=</span> getConst (<span class="dt">Const</span> <span class="st">&quot;Fred&quot;</span>)
+  <span class="co">-- getConst</span>
+<span class="fu">=</span> <span class="st">&quot;Fred&quot;</span></code></pre></div>
+<ul>
+<li><p>The newtype has no runtime cost</p></li>
+<li><p>I just tell the &quot;Functor f =&gt;&quot; which functor dictionary to pass to ln</p></li>
+<li><p>The place where the fmap threw away the function was precisely where the wrapper (the reconstruction function) got discarded giving only the value to return.</p></li>
+</ul>
+</div>
+<div id="composing-and-using-lenses" class="slide section level1">
+<h1>Composing and using lenses</h1>
+<ul>
+<li><p>A lens provides access into the middle of a data structure or container</p></li>
+<li><p>A lens is a first-class value, with a type: Lens' s a</p></li>
+<li><p>Lenses compose:</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">composeL ::</span> <span class="dt">Lens&#39;</span> s1 s2
+         <span class="ot">-&gt;</span> <span class="dt">Lens&#39;</span> s2 a
+         <span class="ot">-&gt;</span> <span class="dt">Lens&#39;</span> s1 a
+
+<span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> f s)
+
+<span class="co">-- Lens&#39; s1 s2 -&gt; Lens&#39; s2 a -&gt; Lens&#39; s1 a</span></code></pre></div>
+<ul>
+<li>If</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">ln1 ::</span> (s2 <span class="ot">-&gt;</span> f s2) <span class="ot">-&gt;</span> (s1 <span class="ot">-&gt;</span> f s1)
+<span class="ot">ln2 ::</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> (s2 <span class="ot">-&gt;</span> f s2)</code></pre></div>
+<ul>
+<li>then</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">ln1 <span class="fu">.</span><span class="ot"> ln2 ::</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> (s1 <span class="ot">-&gt;</span> f s1)</code></pre></div>
+<ul>
+<li>So lens composition is simply function composition, namely (.)</li>
+</ul>
+</div>
+<div id="making-lenses-easily" class="slide section level1">
+<h1>Making lenses easily</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Person</span> <span class="fu">=</span> <span class="dt">P</span> {<span class="ot"> _name ::</span> <span class="dt">String</span>,<span class="ot"> _salary ::</span> <span class="dt">Int</span> }
+
+<span class="ot">name ::</span> <span class="dt">Lens&#39;</span> <span class="dt">Person</span> <span class="dt">String</span>
+name elt_fn (<span class="dt">P</span> n s) <span class="fu">=</span> (\n&#39; <span class="ot">-&gt;</span> <span class="dt">P</span> n&#39; s) <span class="fu">&lt;$&gt;</span> (elt_fn n)</code></pre></div>
+<ul>
+<li><p>All this code is boilerplate !!!</p></li>
+<li><p>Instead:</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">import </span><span class="dt">Control.Lens.TH</span>
+<span class="kw">data</span> <span class="dt">Person</span> <span class="fu">=</span> <span class="dt">P</span> {<span class="ot"> _name ::</span> <span class="dt">String</span>,<span class="ot"> _salary ::</span> <span class="dt">Int</span> }
+
+makeLenses <span class="ch">&#39;&#39;</span><span class="dt">Person</span>  <span class="co">-- Uses Template Haskell</span></code></pre></div>
+</div>
+<div id="composing-lenses" class="slide section level1">
+<h1>Composing lenses</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Person</span> <span class="fu">=</span> <span class="dt">P</span> {<span class="ot"> _name ::</span> <span class="dt">String</span>
+                ,<span class="ot"> _addr ::</span> <span class="dt">Address</span>
+                ,<span class="ot"> _salary ::</span> <span class="dt">Int</span> }
+
+<span class="kw">data</span> <span class="dt">Address</span> <span class="fu">=</span> <span class="dt">A</span> {<span class="ot"> _road ::</span> <span class="dt">String</span>
+                 ,<span class="ot"> _city ::</span> <span class="dt">String</span>
+                 ,<span class="ot"> _postcode ::</span> <span class="dt">String</span> }
+
+makeLenses <span class="ch">&#39;&#39;</span><span class="dt">Person</span>
+makeLenses <span class="ch">&#39;&#39;</span><span class="dt">Address</span>
+
+<span class="ot">setPostcode ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Person</span> <span class="ot">-&gt;</span> <span class="dt">Person</span>
+setPostcode pc p <span class="fu">=</span> set (addr <span class="fu">.</span> postcode) pc p</code></pre></div>
+</div>
+<div id="from-words-to-line-noise" class="slide section level1">
+<h1>From words to line noise</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">setPostcode ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Person</span> <span class="ot">-&gt;</span> <span class="dt">Person</span>
+setPostcode pc p <span class="fu">=</span> set (addr <span class="fu">.</span> postcode) pc p
+
+setPostcode pc p <span class="fu">=</span> add<span class="fu">.</span>postcode <span class="fu">.~</span> pc <span class="fu">$</span> p
+
+setPostcode pc p <span class="fu">=</span> p <span class="fu">&amp;</span> add<span class="fu">.</span>postcode <span class="fu">.~</span> pc
+
+<span class="co">-- (.~) = set</span>
+<span class="co">-- f $ x = f x</span>
+<span class="co">-- x &amp; f = f x</span></code></pre></div>
+</div>
+<div id="remember-we-wanted..." class="slide section level1">
+<h1>Remember we wanted...</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">modifyM  ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> <span class="dt">Maybe</span> s
+<span class="ot">modifyIO ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> <span class="dt">IO</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> <span class="dt">IO</span> s</code></pre></div>
+<ul>
+<li>Easy! A lens IS both of those functions! (By instantiating 'f' with Maybe or IO)</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s</code></pre></div>
+<ul>
+<li><p>So it is useful to instantiate that 'f' to things other than Const and Identity</p></li>
+<li><p>(Lenses gives you this dimension of generality)</p></li>
+</ul>
+</div>
+<div id="virtual-fields" class="slide section level1">
+<h1>Virtual fields</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Temp</span> <span class="fu">=</span> <span class="dt">T</span> {<span class="ot"> _fahrenheit ::</span> <span class="dt">Float</span> }
+makeLenses <span class="ch">&#39;&#39;</span><span class="dt">Temp</span>
+<span class="co">-- fahrenheit :: Lens Temp Float</span>
+
+<span class="ot">centigrade ::</span> <span class="dt">Lens</span> <span class="dt">Temp</span> <span class="dt">Float</span>
+centigrade centi_fn (<span class="dt">T</span> fahren)
+  <span class="fu">=</span> (\centi&#39; <span class="ot">-&gt;</span> <span class="dt">T</span> (cToF centi&#39;)) <span class="fu">&lt;$&gt;</span> (centi_fn (fToC fahren))
+
+<span class="ot">cToF ::</span> <span class="dt">Float</span> <span class="ot">-&gt;</span> <span class="dt">Float</span> <span class="co">-- Centigrade to Fahrenheit</span>
+<span class="ot">fToC ::</span> <span class="dt">Float</span> <span class="ot">-&gt;</span> <span class="dt">Float</span> <span class="co">-- Fahrenheit to Centigrade</span></code></pre></div>
+<ul>
+<li>The 'centigrade' field is not &quot;really there&quot;, but the centigrade lens of fully first-class</li>
+</ul>
+</div>
+<div id="maintaining-invariants" class="slide section level1">
+<h1>Maintaining invariants</h1>
+<p>(time-lens, lens-datetime)</p>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Time</span> <span class="fu">=</span> <span class="dt">T</span> {<span class="ot"> _hours ::</span> <span class="dt">Int</span>, _mins <span class="fu">:.</span> <span class="dt">Int</span> }</code></pre></div>
+<ul>
+<li>We want adding to mins to affect hours</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> <span class="kw">let</span> now <span class="fu">=</span> <span class="dt">T</span> { _hours <span class="fu">=</span> <span class="dv">3</span>, _mins <span class="fu">=</span> <span class="dv">58</span> }
+ghci<span class="fu">&gt;</span> over mins (<span class="fu">+</span> <span class="dv">4</span>) now
+<span class="dt">T</span> { _hours <span class="fu">=</span> <span class="dv">4</span>, _mins <span class="fu">=</span> <span class="dv">2</span> }</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">mins ::</span> <span class="dt">Lens</span> <span class="dt">Time</span> <span class="dt">Int</span>
+mins min_fn (<span class="dt">T</span> h m)
+  <span class="fu">=</span> wrap <span class="fu">&lt;$&gt;</span> (min_fn m)
+  <span class="kw">where</span>
+<span class="ot">    wrap ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Time</span>
+    wrap m&#39; <span class="fu">|</span> m&#39; <span class="fu">&gt;=</span> <span class="dv">60</span>  <span class="fu">=</span> <span class="dt">T</span> (h<span class="fu">+</span><span class="dv">1</span>) (m&#39;<span class="fu">-</span><span class="dv">60</span>)
+            <span class="fu">|</span> m&#39; <span class="fu">&lt;</span> <span class="dv">0</span>    <span class="fu">=</span> <span class="dt">T</span> (h<span class="fu">-</span><span class="dv">1</span>) (m&#39;<span class="fu">+</span><span class="dv">60</span>)
+            <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">T</span> h m&#39;</code></pre></div>
+</div>
+<div id="non-record-structures" class="slide section level1">
+<h1>Non-record structures</h1>
+<p>(Control.Lens.At)</p>
+<ul>
+<li>A Parametrised lens</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">at ::</span> <span class="dt">Ord</span> k <span class="ot">=&gt;</span> k <span class="ot">-&gt;</span> <span class="dt">Lens&#39;</span> (<span class="dt">Map</span> k v) (<span class="dt">Maybe</span> v)</code></pre></div>
+<ul>
+<li>Focues is the value for a key</li>
+<li>Can be Nothing (key not mapped) or (Just v)</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">at k mb_fn m
+  <span class="fu">=</span> wrap <span class="fu">&lt;$&gt;</span> (mb_fn mv)
+  <span class="kw">where</span>
+    mv <span class="fu">=</span> Map.lookup k m
+
+<span class="ot">    wrap ::</span> <span class="dt">Maybe</span> v <span class="ot">-&gt;</span> <span class="dt">Map</span> k v
+    wrap (<span class="dt">Just</span> v&#39;) <span class="fu">=</span> Map.insert k v&#39; m
+    wrap <span class="dt">Nothing</span>   <span class="fu">=</span> <span class="kw">case</span> mv <span class="kw">of</span>
+                       <span class="dt">Nothing</span> <span class="ot">-&gt;</span> m
+                       <span class="dt">Just</span> _  <span class="ot">-&gt;</span> Map.delete k m</code></pre></div>
+</div>
+<div id="bit-fields" class="slide section level1">
+<h1>Bit fields</h1>
+<p>(Data.Bits.Lens)</p>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">bitAt ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Lens&#39;</span> <span class="dt">Int</span> <span class="dt">Bool</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> view (bitAt <span class="dv">1</span>) <span class="dv">3</span>
+<span class="dt">True</span>
+ghci<span class="fu">&gt;</span> view (bitAt <span class="dv">1</span>) <span class="dv">2</span>
+<span class="dt">True</span>
+ghci<span class="fu">&gt;</span> view (bitAt <span class="dv">1</span>) <span class="dv">5</span>
+<span class="dt">False</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">bitAt ::</span> <span class="dt">Bits</span> b <span class="ot">=&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Lens&#39;</span> b <span class="dt">Bool</span></code></pre></div>
+</div>
+<div id="fumbling-in-deep-data-structures" class="slide section level1">
+<h1>Fumbling in deep data structures</h1>
+<ul>
+<li>Web-scraper (package hexpat-lens)</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">p <span class="fu">^..</span> _HTML&#39; <span class="fu">.</span> to allNodes
+             <span class="fu">.</span> traverse <span class="fu">.</span> named <span class="st">&quot;a&quot;</span>
+             <span class="fu">.</span> traverse <span class="fu">.</span> ix <span class="st">&quot;href&quot;</span>
+             <span class="fu">.</span> filtered isLocal
+             <span class="fu">.</span> to trimSpaces</code></pre></div>
+</div>
+<div id="traversals" class="slide section level1">
+<h1>Traversals</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s</code></pre></div>
+<ul>
+<li><p>We have seen that can instantiate 'f' in various ways</p></li>
+<li><p>But what if we changed &quot;Functor&quot; ?</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Traversal&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s</code></pre></div>
+<ul>
+<li>A Traversal is a lens with multiple foci</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="dt">Traversal&#39;</span> s a  <span class="co">-- s: Type of the container</span>
+                <span class="co">-- a: Type of the foci</span></code></pre></div>
+</div>
+<div id="what-on-earth-is-applicative" class="slide section level1">
+<h1>What on earth is Applicative?</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> f <span class="kw">where</span>
+<span class="ot">  pure  ::</span> a <span class="ot">-&gt;</span> f a
+<span class="ot">  (&lt;*&gt;) ::</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
+<ul>
+<li>A bit like Monad, but weaker</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Monad</span> m <span class="kw">where</span>
+<span class="ot">  return ::</span> a <span class="ot">-&gt;</span> m a
+<span class="ot">  (&gt;&gt;=)  ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b</code></pre></div>
+<ul>
+<li>Every Monad is an Applicative</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">pure <span class="fu">=</span> return
+mf <span class="fu">&lt;*&gt;</span> mx <span class="fu">=</span> <span class="kw">do</span> { f <span class="ot">&lt;-</span> mf; x <span class="ot">&lt;-</span> mx; return (f x)}</code></pre></div>
+<ul>
+<li>But not vice versa</li>
+</ul>
+</div>
+<div id="how-does-applicative-support-multi-focus-lenses" class="slide section level1">
+<h1>How does applicative support multi-focus lenses?</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Address</span> <span class="fu">=</span> <span class="dt">A</span> {<span class="ot"> _road ::</span> <span class="dt">String</span>
+                 ,<span class="ot"> _city ::</span> <span class="dt">String</span>
+                 ,<span class="ot"> _postcode ::</span> <span class="dt">String</span> 
+                 }</code></pre></div>
+<ul>
+<li>Reminder</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">road ::</span> <span class="dt">Lens&#39;</span> <span class="dt">Address</span> <span class="dt">String</span>
+road elt_fn (<span class="dt">A</span> r c p)
+  <span class="fu">=</span> (\r&#39; <span class="ot">-&gt;</span> <span class="dt">A</span> r&#39; c p)  <span class="fu">&lt;$&gt;</span>  (elt_fn r)
+<span class="co">--  [Box with hole in it]   [Thing to put in the hole]</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Traversal&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s</code></pre></div>
+<ul>
+<li>Imagine a Traversal focusing on 'road' and 'city'</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">addr_strs ::</span> <span class="dt">Traversal&#39;</span> <span class="dt">Address</span> <span class="dt">String</span>
+addr_strs elt_fn (<span class="dt">A</span> r c p)
+  <span class="fu">=</span> pure (\r&#39; s&#39; <span class="ot">-&gt;</span> <span class="dt">A</span> r&#39; c&#39; p) <span class="fu">&lt;*&gt;</span> (elt_fn r) <span class="fu">&lt;*&gt;</span> (elt_fn c)</code></pre></div>
+<ul>
+<li>Which usually is written:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">addr_strs ::</span> <span class="dt">Traversal&#39;</span> <span class="dt">Address</span> <span class="dt">String</span>
+addr_strs elt_fn (<span class="dt">A</span> r c p)
+  <span class="fu">=</span> (\r&#39; s&#39; <span class="ot">-&gt;</span> <span class="dt">A</span> r&#39; c&#39; p) <span class="fu">&lt;$&gt;</span> (elt_fn r) <span class="fu">&lt;*&gt;</span> (elt_fn c)</code></pre></div>
+</div>
+<div id="using-traversals" class="slide section level1">
+<h1>Using Traversals</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Traversal&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s</code></pre></div>
+<ul>
+<li>Reminder</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">over ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s
+over ln f <span class="fu">=</span> runIdentity <span class="fu">.</span> ln (<span class="dt">Identify</span> <span class="fu">.</span> f)</code></pre></div>
+<ul>
+<li>Imagine instead ln :: Traversal' s a, does that work?</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">over ::</span> <span class="dt">Traversal&#39;</span> s a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s
+over ln f <span class="fu">=</span> runIdentity <span class="fu">.</span> ln (<span class="dt">Identity</span> <span class="fu">.</span> f)</code></pre></div>
+<ul>
+<li><p>Yes, if Identity is an instance of Applicative, which it is.</p></li>
+<li><p>over in action</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> <span class="kw">let</span> fredA <span class="fu">=</span> <span class="dt">A</span> <span class="st">&quot;71 Humberstone Rd&quot;</span> <span class="st">&quot;Cambridge&quot;</span> <span class="st">&quot;CB4 1JD&quot;</span>
+ghci<span class="fu">&gt;</span> over addr_strs toLower fredA
+<span class="dt">A</span> <span class="st">&quot;71 humberstone rd&quot;</span> <span class="st">&quot;cambridge&quot;</span> <span class="st">&quot;CB4 1JD&quot;</span></code></pre></div>
+</div>
+<div id="more-plase...-try-view" class="slide section level1">
+<h1>...more plase... try 'view'</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">view ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> a)
+view ln s <span class="fu">=</span> getConst (ln <span class="dt">Const</span> s)</code></pre></div>
+<ul>
+<li>Try replacing Lens with Traversal</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">view ::</span> <span class="dt">Traversal&#39;</span> s a <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> a)
+view ln s <span class="fu">=</span> getConst (ln <span class="dt">Const</span> s)</code></pre></div>
+<ul>
+<li><p>This absolutely can't work! (Why not?)</p></li>
+<li><p>We need Const to be an instance of Applicative</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> f <span class="kw">where</span>
+<span class="ot">  pure  ::</span> a <span class="ot">-&gt;</span> f a
+<span class="ot">  (&lt;*&gt;) ::</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Const</span> v a <span class="fu">=</span> <span class="dt">Const</span> v
+
+<span class="ot">getConst ::</span> <span class="dt">Const</span> v a <span class="ot">-&gt;</span> v
+getConst (<span class="dt">Const</span> x) <span class="fu">=</span> x
+
+<span class="kw">class</span> <span class="dt">Monoid</span> a <span class="kw">where</span>
+<span class="ot">  mempty  ::</span> a
+<span class="ot">  mappend ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a
+
+<span class="kw">instance</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">Const</span> a) <span class="kw">where</span>
+  pure x <span class="fu">=</span> <span class="dt">Const</span> mempty
+  (<span class="dt">Const</span> vf) <span class="fu">&lt;*&gt;</span> (<span class="dt">Const</span> va) <span class="fu">=</span> <span class="dt">Const</span> (vp <span class="ot">`mappend`</span> va)</code></pre></div>
+<ul>
+<li>So 'view' on Traversals does a kind of fold</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Monoid</span> [a] <span class="kw">where</span>
+  mempty <span class="fu">=</span> []
+  mappend <span class="fu">=</span> (<span class="fu">++</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> <span class="kw">let</span> fredA <span class="fu">=</span> <span class="dt">A</span> <span class="st">&quot;71 Humberstone Rd&quot;</span> <span class="st">&quot;Cambridge&quot;</span> <span class="st">&quot;CB4 1JD&quot;</span>
+ghci<span class="fu">&gt;</span> view addr_strs fredA
+<span class="st">&quot;71 Humberstone RdCambridge&quot;</span></code></pre></div>
+</div>
+<div id="non-uniform-traversals" class="slide section level1">
+<h1>Non-uniform traversals</h1>
+<ul>
+<li><p>The foci of a traversal can be highlu selective</p></li>
+<li><p>Every alternate element of a list</p></li>
+<li><p>All the even elements of a tree</p></li>
+<li><p>The 'name' fields of all records in a table whose 'salary' field is &gt; £20,100</p></li>
+</ul>
+</div>
+<div id="composing-traversals" class="slide section level1">
+<h1>Composing Traversals</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span>      s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Functor</span> f
+                    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> f s)
+<span class="kw">type</span> <span class="dt">Traversal&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Applicative</span> f
+                    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> f s)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">ln1 ::</span> <span class="dt">Lens&#39;</span>      s1 s2
+<span class="ot">tr1 ::</span> <span class="dt">Traversal&#39;</span> s1 s2
+<span class="ot">ln2 ::</span> <span class="dt">Lens&#39;</span>      s2 a
+<span class="ot">tr2 ::</span> <span class="dt">Traversal&#39;</span> s2 a
+
+ln1 <span class="fu">.</span><span class="ot"> ln2 ::</span> <span class="dt">Lens&#39;</span>      s1 a
+tr1 <span class="fu">.</span><span class="ot"> tr2 ::</span> <span class="dt">Traversal&#39;</span> s1 a
+tr1 <span class="fu">.</span><span class="ot"> ln2 ::</span> <span class="dt">Traversal&#39;</span> s1 a
+ln1 <span class="fu">.</span> tr2 <span class="fu">:.</span> <span class="dt">Tarversal&#39;</span> s1 a</code></pre></div>
+</div>
+<div id="unusually-for-a-library-lenses-are-not-abstract" class="slide section level1">
+<h1>Unusually for a library, lenses are not abstract</h1>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Functor</span> f
+               <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> f s)</code></pre></div>
+<ul>
+<li>...and not:</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> <span class="dt">L</span> (forall f<span class="fu">.</span> <span class="dt">Functor</span> f
+                       <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> f s))</code></pre></div>
+<ul>
+<li><p>Lenses and traversals would not compose (or would require lots of different functions to do so)</p></li>
+<li><p>BUT: the inner workings are more exposed</p></li>
+</ul>
+</div>
+<div id="i-have-been-lying-throughout" class="slide section level1">
+<h1>I have been lying throughout</h1>
+<ul>
+<li>Almost everything has a (much) more general type than the one I have given</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> <span class="dt">Lens</span> s s a a
+
+<span class="kw">type</span> <span class="dt">Lens</span> s t a b
+  <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> (s <span class="ot">-&gt;</span> f t)</code></pre></div>
+<p>-- over :: Lens' s a -&gt; (a -&gt; a) -&gt; s -&gt; s &gt; over :: Profunctor p =&gt; Setting p s t a b -&gt; p a b -&gt; s -&gt; t</p>
+<ul>
+<li><p>Edward is deeply in thrall to abstractionitis</p></li>
+<li><p>But his Haddocks give lots of instantiations of the incomprehensible most general type</p></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- traverseOf :: Functor f     =&gt; Iso s t a b       -&gt; (a -&gt; f b) -&gt; s -&gt; f t</span>
+<span class="co">-- traverseOf :: Functor f     =&gt; Lens s t a b      -&gt; (a -&gt; f b) -&gt; s -&gt; f t</span>
+<span class="co">-- traverseOf :: Applicative f =&gt; Traversal s t a b -&gt; (a -&gt; f b) -&gt; s -&gt; f t</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">traverseOf ::</span> <span class="dt">Over</span> p f s t a b <span class="ot">-&gt;</span> p a (f b) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f t</code></pre></div>
+</div>
+<div id="there-is-more.-a-lot-more" class="slide section level1">
+<h1>There is more. A lot more</h1>
+<ul>
+<li>Prisms (pattern matching)</li>
+<li>Indexed lenses</li>
+<li>Generic programming</li>
+<li>Interaction with state monads</li>
+<li><p>Folding, traversing, and filtering</p></li>
+<li>lens-3.9.1 has</li>
+<li>94 modules</li>
+<li>69 classes</li>
+<li>39 newtypes</li>
+<li>34 data types</li>
+<li><p>194 type synonyms</p></li>
+<li><p>Bottom line: this is an idea that goes far</p></li>
+</ul>
+</div>
+<div id="take-away-thoughts" class="slide section level1">
+<h1>Take away thoughts</h1>
+<ul>
+<li><p>A hymn to the power of abstraction</p></li>
+<li><p>Lenses, and their variants (notabli Traversals), as a composable first-class values, giver remarkable expressive power</p></li>
+<li>It all rests on Haskell's abstraction facilities:</li>
+<li>Type classes</li>
+<li>Higher rank types</li>
+<li><p>Higher kinded type variables</p></li>
+</ul>
+</div>
+</body>
+</html>
