@@ -1,6 +1,6 @@
 % Notes on "Lenses: compositional data access and manipulation" by Simon Peyton-Jones
 % Juan Manuel Gimeno Illa
-% 9 May 2018
+% 9 & 16 May 2018
 
 Disclaimer
 ==========
@@ -101,7 +101,7 @@ The obvious first attempt
 
 * Doing view then update is Not Cool
 
-    - You could add a mofify method... but...
+    - You could add a modify method... but...
 
 Inflexible
 ==========
@@ -189,7 +189,7 @@ How are we going to do the set?
 > instance Functor Identity where
 >   fmap f (Identity x) = Identity (f x)
 > 
-> set :: Lens' s a -> (a -> s -> s)
+> set :: Lens' s a -> a -> s -> s
 > set ln x s
 >   = runIdentity (ln set_fld s)
 >     where set_fld :: a -> Identity a
@@ -205,16 +205,16 @@ That is, we discard current value and return new value x
 > const :: a -> b -> a
 > const x _ = x
 >
-> set :: Lens' s a -> (a -> s -> s)
+> set :: Lens' s a -> a -> s -> s
 > set ln x = runIdentity . ln (Identity . const x)
 
 And, in the same spirit
 =======================
 
-> set :: Lens' s a -> (a -> s -> s)
+> set :: Lens' s a -> a -> s -> s
 > set ln x = runIdentity . ln (Identity . const x)
 > 
-> over :: Lens' s a -> (a -> a) -> s -> a
+> over :: Lens' s a -> (a -> a) -> s -> s
 > over ln f = runIdentity . ln (Identity . f)
 
 Which is a lot more efficient than the get/set idea we hold before
@@ -227,7 +227,7 @@ Same again... using a lens to view
 > data LensR s a = L { viewR :: s -> a
 >                    , setR  :: a -> s -> s }
 > 
-> view :: Lens' s a -> (s -> a)
+> view :: Lens' s a -> s -> a
 > view ln s = ...      -- ln returns a value of type (f s)
 >                      -- but we want a value of type a
 >                      -- This looks harder !!!
@@ -244,7 +244,7 @@ Same again... using a lens to view
 > instance Functor (Const v) where
 >   fmap _ (Const x) = Const x
 > 
-> view :: Lens' s a -> (s -> a)
+> view :: Lens' s a -> s -> a
 > view ln s = getConst (ln Const s)
 
 * Here Const is, deduced by the type inferencer, a -> Const a a
@@ -258,14 +258,14 @@ From Lens to LensR
 ==================
 
 > type Lens' s a = forall f. Functor f
->                         => (a -> f a) -> (s -> f s)
+>                         => (a -> f a) -> s -> f s
 > data LensR s a = L { viewR :: s -> a
 >                    , setR  :: a -> s -> s }
 > 
-> view :: Lens' s a -> (s -> a)
+> view :: Lens' s a -> s -> a
 > view ln = getComst . ln Const
 > 
-> set :: Lens' s a -> (a -> s -> s)
+> set :: Lens' s a -> a -> s -> s
 > view ln x = getId . ln (Identity . const x)
 > 
 > lensToLensR :: Lens' s a -> LensR s a
@@ -283,7 +283,7 @@ Let's create a Lens
 ===================
 
 > type Lens' s a = forall f. Functor f
->                         => (a -> f a) -> (s -> f s)
+>                         => (a -> f a) -> s -> f s
 > 
 > data Person = P { _name :: String, _salary :: Int }
 > 
@@ -357,7 +357,7 @@ Composing and using lenses
 >          -> Lens' s2 a
 >          -> Lens' s1 a
 > 
-> type Lens' s a = forall f. Functor f => (a -> f a) -> (s -> f s)
+> type Lens' s a = forall f. Functor f => (a -> f a) -> s -> f s
 > 
 > -- Lens' s1 s2 -> Lens' s2 a -> Lens' s1 a
 
@@ -368,7 +368,7 @@ Composing and using lenses
   
 * then
      
-> ln1 . ln2 :: (a -> f a) -> (s1 -> f s1)
+> ln1 . ln2 :: (a -> f a) -> s1 -> f s1
 
 * So lens composition is simply function composition, namely (.)
 
@@ -613,12 +613,12 @@ Using Traversals
 ...more plase... try 'view'
 ===========================
 
-> view :: Lens' s a -> (s -> a)
+> view :: Lens' s a -> s -> a
 > view ln s = getConst (ln Const s)
 
 * Try replacing Lens with Traversal
 
-> view :: Traversal' s a -> (s -> a)
+> view :: Traversal' s a -> s -> a
 > view ln s = getConst (ln Const s)
 
 * This absolutely can't work! (Why not?)
@@ -667,9 +667,9 @@ Composing Traversals
 ====================
 
 > type Lens'      s a = forall f. Functor f
->                     => (a -> f a) -> (s -> f s)
+>                     => (a -> f a) -> s -> f s
 > type Traversal' s a = forall f. Applicative f
->                     => (a -> f a) -> (s -> f s)
+>                     => (a -> f a) -> s -> f s
 
 < ln1 :: Lens'      s1 s2
 < tr1 :: Traversal' s1 s2
@@ -685,12 +685,12 @@ Unusually for a library, lenses are not abstract
 ================================================
 
 > type Lens' s a = forall f. Functor f
->                => (a -> f a) -> (s -> f s)
+>                => (a -> f a) -> s -> f s
 
 * ...and not:
 
 > newtype Lens' s a = L (forall f. Functor f
->                        => (a -> f a) -> (s -> f s))
+>                        => (a -> f a) -> s -> f s)
 
 * Lenses and traversals would not compose (or would require lots of different functions to do so)
 
@@ -704,7 +704,7 @@ I have been lying throughout
 > type Lens' s a = Lens s s a a
 > 
 > type Lens s t a b
->   = forall f. Functor f => (a -> f b) -> (s -> f t)
+>   = forall f. Functor f => (a -> f b) -> s -> f t
 
 -- over :: Lens' s a -> (a -> a) -> s -> s
 > over :: Profunctor p => Setting p s t a b -> p a b -> s -> t
