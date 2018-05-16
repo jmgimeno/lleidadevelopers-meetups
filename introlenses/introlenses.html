@@ -295,7 +295,7 @@ getConst (<span class="dt">Const</span> x) <span class="fu">=</span> x
 <span class="ot">view ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> a
 view ln s <span class="fu">=</span> getConst (ln <span class="dt">Const</span> s)</code></pre></div>
 <ul>
-<li><p>Here Const is, deduced by the type inferencer, a -&gt; Const a a</p></li>
+<li><p>Here Const is <code class="sourceCode haskell">a <span class="ot">-&gt;</span> <span class="dt">Const</span> a a</code> (which is deduced by the type system)</p></li>
 <li><p>Or, as Edward would write it:</p></li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">view ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> a
@@ -316,9 +316,7 @@ view ln x <span class="fu">=</span> getId <span class="fu">.</span> ln (<span cl
 
 <span class="ot">lensToLensR ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> <span class="dt">LensR</span> s a
 <span class="dt">LensToLensR</span> ln <span class="fu">=</span> <span class="dt">L</span> { viewR <span class="fu">=</span> view ln, setR <span class="fu">=</span> set ln }</code></pre></div>
-</div>
-<div id="exercise" class="slide section level1">
-<h1>Exercise</h1>
+<h2 id="exercise">Exercise</h2>
 <ul>
 <li>Write lensRToLens</li>
 </ul>
@@ -339,19 +337,17 @@ lensRToLens <span class="fu">=</span> undefined</code></pre></div>
 name elt_fn (<span class="dt">P</span> n s)
   <span class="fu">=</span> fmap (\n&#39; <span class="ot">-&gt;</span> <span class="dt">P</span> n&#39; s) (elt_fn n)</code></pre></div>
 <ul>
-<li>elt_fn</li>
-<li>String -&gt; f String</li>
-<li><p>element function</p></li>
-<li>' -&gt; P n' s</li>
-<li>String -&gt; Person</li>
+<li><code class="sourceCode haskell"><span class="ot">elt_fn ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> f <span class="dt">String</span></code>
+<ul>
+<li>element function</li>
+</ul></li>
+<li><code class="sourceCode haskell">(\n&#39; <span class="ot">-&gt;</span> <span class="dt">P</span> n&#39; s)<span class="ot"> ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Person</span></code>
+<ul>
 <li>It's like a data structure with a hole in it</li>
-<li><p>It's the function that replaces the name of the given Person</p></li>
-<li>elt_fn n</li>
-<li><p>f String</p></li>
-<li><p>fmap is needed to go from f String to f Person given String -&gt; Person</p></li>
-<li><p>I can express it using &lt;$&gt; from Data.Functor</p></li>
+<li>It's the function that replaces the name of the given Person</li>
+</ul></li>
+<li><code class="sourceCode haskell">(elt_fn n)<span class="ot"> ::</span> f <span class="dt">String</span></code></li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">name elt_fn (<span class="dt">P</span> n s)  <span class="fu">=</span> (\n&#39; <span class="ot">-&gt;</span> <span class="dt">P</span> n&#39; s) <span class="fu">&lt;$&gt;</span> (elt_fn n)</code></pre></div>
 </div>
 <div id="using-lens" class="slide section level1">
 <h1>Using lens</h1>
@@ -376,7 +372,7 @@ ghci<span class="fu">&gt;</span> set name <span class="st">&quot;Bill&quot;</spa
 <span class="fu">=</span> <span class="st">&quot;Fred&quot;</span></code></pre></div>
 <ul>
 <li><p>The newtype has no runtime cost</p></li>
-<li><p>I just tell the &quot;Functor f =&gt;&quot; which functor dictionary to pass to ln</p></li>
+<li><p>I just tell the &quot;<code class="sourceCode haskell"><span class="dt">Functor</span> f <span class="ot">=&gt;</span></code>&quot; which functor dictionary to pass to <code class="sourceCode haskell">ln</code></p></li>
 <li><p>The place where the fmap threw away the function was precisely where the wrapper (the reconstruction function) got discarded giving only the value to return.</p></li>
 </ul>
 </div>
@@ -404,7 +400,7 @@ ghci<span class="fu">&gt;</span> set name <span class="st">&quot;Bill&quot;</spa
 </ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">ln1 <span class="fu">.</span><span class="ot"> ln2 ::</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s1 <span class="ot">-&gt;</span> f s1</code></pre></div>
 <ul>
-<li>So lens composition is simply function composition, namely (.)</li>
+<li><strong>So lens composition is simply function composition, namely <code class="sourceCode haskell">(<span class="fu">.</span>)</code></strong> !!!!</li>
 </ul>
 </div>
 <div id="making-lenses-easily" class="slide section level1">
@@ -548,8 +544,8 @@ ghci<span class="fu">&gt;</span> view (bitAt <span class="dv">1</span>) <span cl
 <h1>Traversals</h1>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s</code></pre></div>
 <ul>
-<li><p>We have seen that can instantiate 'f' in various ways</p></li>
-<li><p>But what if we changed &quot;Functor&quot; ?</p></li>
+<li><p>We have seen that can instantiate <code class="sourceCode haskell">f</code> in various ways</p></li>
+<li><p>But what if we changed <code class="sourceCode haskell"><span class="dt">Functor</span></code> ?</p></li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Traversal&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s</code></pre></div>
 <ul>
@@ -564,13 +560,13 @@ ghci<span class="fu">&gt;</span> view (bitAt <span class="dv">1</span>) <span cl
 <span class="ot">  pure  ::</span> a <span class="ot">-&gt;</span> f a
 <span class="ot">  (&lt;*&gt;) ::</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
 <ul>
-<li>A bit like Monad, but weaker</li>
+<li>A bit like <code class="sourceCode haskell"><span class="dt">Monad</span></code>, but weaker</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Monad</span> m <span class="kw">where</span>
 <span class="ot">  return ::</span> a <span class="ot">-&gt;</span> m a
 <span class="ot">  (&gt;&gt;=)  ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b</code></pre></div>
 <ul>
-<li>Every Monad is an Applicative</li>
+<li>Every <code class="sourceCode haskell"><span class="dt">Monad</span></code> is an <code class="sourceCode haskell"><span class="dt">Applicative</span></code></li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell">pure <span class="fu">=</span> return
 mf <span class="fu">&lt;*&gt;</span> mx <span class="fu">=</span> <span class="kw">do</span> { f <span class="ot">&lt;-</span> mf; x <span class="ot">&lt;-</span> mx; return (f x)}</code></pre></div>
@@ -614,34 +610,33 @@ addr_strs elt_fn (<span class="dt">A</span> r c p)
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">over ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s
 over ln f <span class="fu">=</span> runIdentity <span class="fu">.</span> ln (<span class="dt">Identify</span> <span class="fu">.</span> f)</code></pre></div>
 <ul>
-<li>Imagine instead ln :: Traversal' s a, does that work?</li>
+<li>Imagine instead <code class="sourceCode haskell"><span class="ot">ln ::</span> <span class="dt">Traversal&#39;</span> s a</code>, does that work?</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">over ::</span> <span class="dt">Traversal&#39;</span> s a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> s
 over ln f <span class="fu">=</span> runIdentity <span class="fu">.</span> ln (<span class="dt">Identity</span> <span class="fu">.</span> f)</code></pre></div>
 <ul>
-<li><p>Yes, if Identity is an instance of Applicative, which it is.</p></li>
-<li><p>over in action</p></li>
+<li><p>Yes, if <code class="sourceCode haskell"><span class="dt">Identity</span></code> is an instance of <code class="sourceCode haskell"><span class="dt">Applicative</span></code> (which it is)</p></li>
+<li><p><code class="sourceCode haskell">over</code> in action</p></li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> <span class="kw">let</span> fredA <span class="fu">=</span> <span class="dt">A</span> <span class="st">&quot;71 Humberstone Rd&quot;</span> <span class="st">&quot;Cambridge&quot;</span> <span class="st">&quot;CB4 1JD&quot;</span>
 ghci<span class="fu">&gt;</span> over addr_strs toLower fredA
 <span class="dt">A</span> <span class="st">&quot;71 humberstone rd&quot;</span> <span class="st">&quot;cambridge&quot;</span> <span class="st">&quot;CB4 1JD&quot;</span></code></pre></div>
 </div>
-<div id="more-plase...-try-view" class="slide section level1">
-<h1>...more plase... try 'view'</h1>
+<div id="more-please...-try-view" class="slide section level1">
+<h1>...more please... try 'view'</h1>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">view ::</span> <span class="dt">Lens&#39;</span> s a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> a
 view ln s <span class="fu">=</span> getConst (ln <span class="dt">Const</span> s)</code></pre></div>
 <ul>
-<li>Try replacing Lens with Traversal</li>
+<li>Try replacing <code class="sourceCode haskell"><span class="dt">Lens</span></code> with <code class="sourceCode haskell"><span class="dt">Traversal</span></code></li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">view ::</span> <span class="dt">Traversal&#39;</span> s a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> a
 view ln s <span class="fu">=</span> getConst (ln <span class="dt">Const</span> s)</code></pre></div>
 <ul>
-<li><p>This absolutely can't work! (Why not?)</p></li>
-<li><p>We need Const to be an instance of Applicative</p></li>
+<li><p>This absolutely can't work!</p>
+<ul>
+<li>We need <code class="sourceCode haskell"><span class="dt">Const</span></code> to be an instance of <code class="sourceCode haskell"><span class="dt">Applicative</span></code></li>
+</ul></li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> f <span class="kw">where</span>
-<span class="ot">  pure  ::</span> a <span class="ot">-&gt;</span> f a
-<span class="ot">  (&lt;*&gt;) ::</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Const</span> v a <span class="fu">=</span> <span class="dt">Const</span> v
 
 <span class="ot">getConst ::</span> <span class="dt">Const</span> v a <span class="ot">-&gt;</span> v
@@ -654,8 +649,11 @@ getConst (<span class="dt">Const</span> x) <span class="fu">=</span> x
 <span class="kw">instance</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">Const</span> a) <span class="kw">where</span>
   pure x <span class="fu">=</span> <span class="dt">Const</span> mempty
   (<span class="dt">Const</span> vf) <span class="fu">&lt;*&gt;</span> (<span class="dt">Const</span> va) <span class="fu">=</span> <span class="dt">Const</span> (vp <span class="ot">`mappend`</span> va)</code></pre></div>
+</div>
+<div id="view-on-traversals" class="slide section level1">
+<h1>View on Traversals</h1>
 <ul>
-<li>So 'view' on Traversals does a kind of fold</li>
+<li>So <code class="sourceCode haskell">view</code> on <code class="sourceCode haskell"><span class="dt">Traversals</span></code> does a kind of fold</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Monoid</span> [a] <span class="kw">where</span>
   mempty <span class="fu">=</span> []
@@ -663,11 +661,9 @@ getConst (<span class="dt">Const</span> x) <span class="fu">=</span> x
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">ghci<span class="fu">&gt;</span> <span class="kw">let</span> fredA <span class="fu">=</span> <span class="dt">A</span> <span class="st">&quot;71 Humberstone Rd&quot;</span> <span class="st">&quot;Cambridge&quot;</span> <span class="st">&quot;CB4 1JD&quot;</span>
 ghci<span class="fu">&gt;</span> view addr_strs fredA
 <span class="st">&quot;71 Humberstone RdCambridge&quot;</span></code></pre></div>
-</div>
-<div id="non-uniform-traversals" class="slide section level1">
-<h1>Non-uniform traversals</h1>
+<h2 id="non-uniform-traversals">Non-uniform traversals</h2>
 <ul>
-<li><p>The foci of a traversal can be highlu selective</p></li>
+<li><p>The foci of a traversal can be highly selective</p></li>
 <li><p>Every alternate element of a list</p></li>
 <li><p>All the even elements of a tree</p></li>
 <li><p>The 'name' fields of all records in a table whose 'salary' field is &gt; £20,100</p></li>
@@ -675,6 +671,9 @@ ghci<span class="fu">&gt;</span> view addr_strs fredA
 </div>
 <div id="composing-traversals" class="slide section level1">
 <h1>Composing Traversals</h1>
+<ul>
+<li>Traversals and Lenses compose !!!</li>
+</ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span>      s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Functor</span> f
                     <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s
 <span class="kw">type</span> <span class="dt">Traversal&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Applicative</span> f
@@ -700,7 +699,8 @@ ln1 <span class="fu">.</span> tr2 <span class="fu">:.</span> <span class="dt">Ta
                        <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s)</code></pre></div>
 <ul>
 <li><p>Lenses and traversals would not compose (or would require lots of different functions to do so)</p></li>
-<li><p>BUT: the inner workings are more exposed</p></li>
+<li><p>The inner workings are more exposed</p></li>
+<li><p>But you don't need the lenses library to create lenses (they're only rank-2 functions !!!)</p></li>
 </ul>
 </div>
 <div id="i-have-been-lying-throughout" class="slide section level1">
@@ -712,7 +712,8 @@ ln1 <span class="fu">.</span> tr2 <span class="fu">:.</span> <span class="dt">Ta
 
 <span class="kw">type</span> <span class="dt">Lens</span> s t a b
   <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f t</code></pre></div>
-<p>-- over :: Lens' s a -&gt; (a -&gt; a) -&gt; s -&gt; s &gt; over :: Profunctor p =&gt; Setting p s t a b -&gt; p a b -&gt; s -&gt; t</p>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="co">-- over :: Lens&#39; s a -&gt; (a -&gt; a) -&gt; s -&gt; s</span>
+<span class="ot">over ::</span> <span class="dt">Profunctor</span> p <span class="ot">=&gt;</span> <span class="dt">Setting</span> p s t a b <span class="ot">-&gt;</span> p a b <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> t</code></pre></div>
 <ul>
 <li><p>Edward is deeply in thrall to abstractionitis</p></li>
 <li><p>But his Haddocks give lots of instantiations of the incomprehensible most general type</p></li>
@@ -726,28 +727,32 @@ ln1 <span class="fu">.</span> tr2 <span class="fu">:.</span> <span class="dt">Ta
 <h1>There is more. A lot more</h1>
 <ul>
 <li>Prisms (pattern matching)</li>
+<li>Folding, traversing, and filtering</li>
 <li>Indexed lenses</li>
 <li>Generic programming</li>
 <li>Interaction with state monads</li>
-<li><p>Folding, traversing, and filtering</p></li>
-<li>lens-3.9.1 has</li>
+<li>lens-3.9.1 has
+<ul>
 <li>94 modules</li>
 <li>69 classes</li>
 <li>39 newtypes</li>
 <li>34 data types</li>
-<li><p>194 type synonyms</p></li>
-<li><p>Bottom line: this is an idea that goes far</p></li>
+<li>194 type synonyms</li>
+</ul></li>
+<li>Bottom line: this is an idea that goes far, very far ...</li>
 </ul>
 </div>
 <div id="take-away-thoughts" class="slide section level1">
 <h1>Take away thoughts</h1>
 <ul>
 <li><p>A hymn to the power of abstraction</p></li>
-<li><p>Lenses, and their variants (notabli Traversals), as a composable first-class values, giver remarkable expressive power</p></li>
-<li>It all rests on Haskell's abstraction facilities:</li>
+<li><p>Lenses, and their variants (notably Traversals), as a composable first-class values, giver remarkable expressive power</p></li>
+<li>It all rests on Haskell's abstraction facilities:
+<ul>
 <li>Type classes</li>
+<li>Higher kinded type variables</li>
 <li>Higher rank types</li>
-<li><p>Higher kinded type variables</p></li>
+</ul></li>
 </ul>
 </div>
 </body>

@@ -247,7 +247,7 @@ Same again... using a lens to view
 > view :: Lens' s a -> s -> a
 > view ln s = getConst (ln Const s)
 
-* Here Const is, deduced by the type inferencer, a -> Const a a
+* Here Const is `a -> Const a a`{.haskell} (which is deduced by the type system)
 
 * Or, as Edward would write it:
 
@@ -272,7 +272,7 @@ From Lens to LensR
 > LensToLensR ln = L { viewR = view ln, setR = set ln }
 
 Exercise
-========
+--------
 
 * Write lensRToLens
 
@@ -294,23 +294,14 @@ Let's create a Lens
 > name elt_fn (P n s)
 >   = fmap (\n' -> P n' s) (elt_fn n)
 
-* elt_fn
-  - String -> f String
-  - element function
+* `elt_fn :: String -> f String`{.haskell}
+    - element function
 
-* \n' -> P n' s
-  - String -> Person
-  - It's like a data structure with a hole in it
-  - It's the function that replaces the name of the given Person
+* `(\n' -> P n' s) :: String -> Person`{.haskell}
+    - It's like a data structure with a hole in it
+    - It's the function that replaces the name of the given Person
 
-* elt_fn n
-  - f String
-
-* fmap is needed to go from f String to f Person given String -> Person
-
-* I can express it using <$> from Data.Functor
-
-> name elt_fn (P n s)  = (\n' -> P n' s) <$> (elt_fn n)
+* `(elt_fn n) :: f String`{.haskell}
 
 Using lens
 ==========
@@ -338,7 +329,7 @@ How on earth does this work?
 
 * The newtype has no runtime cost
 
-* I just tell the "Functor f =>" which functor dictionary to pass to ln
+* I just tell the "`Functor f =>`{.haskell}" which functor dictionary to pass to `ln`{.haskell}
 
 * The place where the fmap threw away the function was precisely where the
 wrapper (the reconstruction function) got discarded giving only the value
@@ -370,7 +361,7 @@ Composing and using lenses
      
 > ln1 . ln2 :: (a -> f a) -> s1 -> f s1
 
-* So lens composition is simply function composition, namely (.)
+* __So lens composition is simply function composition, namely `(.)`{.haskell}__ !!!!
 
 Making lenses easily
 ====================
@@ -527,9 +518,9 @@ Traversals
 
 > type Lens' s a = forall f. Functor f => (a -> f a) -> s -> f s
 
-* We have seen that can instantiate 'f' in various ways
+* We have seen that can instantiate `f`{.haskell} in various ways
 
-* But what if we changed "Functor" ?
+* But what if we changed `Functor`{.haskell} ?
 
 > type Traversal' s a = forall f. Applicative f => (a -> f a) -> s -> f s
 
@@ -545,13 +536,13 @@ What on earth is Applicative?
 >   pure  :: a -> f a
 >   (<*>) :: f (a -> b) -> f a -> f b
 
-* A bit like Monad, but weaker
+* A bit like `Monad`{.haskell}, but weaker
 
 > class Applicative f => Monad m where
 >   return :: a -> m a
 >   (>>=)  :: m a -> (a -> m b) -> m b
 
-* Every Monad is an Applicative
+* Every `Monad`{.haskell} is an `Applicative`{.haskell}
 
 > pure = return
 > mf <*> mx = do { f <- mf; x <- mx; return (f x)}
@@ -597,37 +588,33 @@ Using Traversals
 > over :: Lens' s a => (a -> a) -> s -> s
 > over ln f = runIdentity . ln (Identify . f)
 
-* Imagine instead ln :: Traversal' s a, does that work?
+* Imagine instead `ln :: Traversal' s a`{.haskell}, does that work?
 
 > over :: Traversal' s a -> (a -> a) -> s -> s
 > over ln f = runIdentity . ln (Identity . f)
 
-* Yes, if Identity is an instance of Applicative, which it is.
+* Yes, if `Identity`{.haskell} is an instance of `Applicative`{.haskell} (which it is)
 
-* over in action
+* `over`{.haskell} in action
 
 < ghci> let fredA = A "71 Humberstone Rd" "Cambridge" "CB4 1JD"
 < ghci> over addr_strs toLower fredA
 < A "71 humberstone rd" "cambridge" "CB4 1JD"
 
-...more plase... try 'view'
+...more please... try 'view'
 ===========================
 
 > view :: Lens' s a -> s -> a
 > view ln s = getConst (ln Const s)
 
-* Try replacing Lens with Traversal
+* Try replacing `Lens`{.haskell} with `Traversal`{.haskell}
 
 > view :: Traversal' s a -> s -> a
 > view ln s = getConst (ln Const s)
 
-* This absolutely can't work! (Why not?)
+* This absolutely can't work!
 
-* We need Const to be an instance of Applicative
-
-> class Functor f => Applicative f where
->   pure  :: a -> f a
->   (<*>) :: f (a -> b) -> f a -> f b
+    - We need `Const`{.haskell} to be an instance of `Applicative`{.haskell}
 
 > newtype Const v a = Const v
 > 
@@ -642,7 +629,10 @@ Using Traversals
 >   pure x = Const mempty
 >   (Const vf) <*> (Const va) = Const (vp `mappend` va)
 
-* So 'view' on Traversals does a kind of fold
+View on Traversals
+==================
+
+* So `view`{.haskell} on `Traversals`{.haskell} does a kind of fold
 
 > instance Monoid [a] where
 >   mempty = []
@@ -653,9 +643,9 @@ Using Traversals
 < "71 Humberstone RdCambridge"
 
 Non-uniform traversals
-======================
+----------------------
 
-* The foci of a traversal can be highlu selective
+* The foci of a traversal can be highly selective
 
   - Every alternate element of a list
 
@@ -665,6 +655,8 @@ Non-uniform traversals
 
 Composing Traversals
 ====================
+
+* Traversals and Lenses compose !!!
 
 > type Lens'      s a = forall f. Functor f
 >                     => (a -> f a) -> s -> f s
@@ -694,7 +686,9 @@ Unusually for a library, lenses are not abstract
 
 * Lenses and traversals would not compose (or would require lots of different functions to do so)
 
-* BUT: the inner workings are more exposed
+* The inner workings are more exposed
+
+* But you don't need the lenses library to create lenses (they're only rank-2 functions !!!)
 
 I have been lying throughout
 ============================
@@ -706,7 +700,7 @@ I have been lying throughout
 > type Lens s t a b
 >   = forall f. Functor f => (a -> f b) -> s -> f t
 
--- over :: Lens' s a -> (a -> a) -> s -> s
+> -- over :: Lens' s a -> (a -> a) -> s -> s
 > over :: Profunctor p => Setting p s t a b -> p a b -> s -> t
 
 * Edward is deeply in thrall to abstractionitis
@@ -723,28 +717,27 @@ There is more. A lot more
 =========================
 
 * Prisms (pattern matching)
+* Folding, traversing, and filtering
 * Indexed lenses
 * Generic programming
 * Interaction with state monads
-* Folding, traversing, and filtering
-
 * lens-3.9.1 has
-  - 94 modules
-  - 69 classes
-  - 39 newtypes
-  - 34 data types
-  - 194 type synonyms
+    - 94 modules
+    - 69 classes
+    - 39 newtypes
+    - 34 data types
+    - 194 type synonyms
 
-* Bottom line: this is an idea that goes far
+* Bottom line: this is an idea that goes far, very far ...
 
 Take away thoughts
 ==================
 
 * A hymn to the power of abstraction
 
-* Lenses, and their variants (notabli Traversals), as a composable first-class values, giver remarkable expressive power
+* Lenses, and their variants (notably Traversals), as a composable first-class values, giver remarkable expressive power
 
 * It all rests on Haskell's abstraction facilities:
-  - Type classes
-  - Higher rank types
-  - Higher kinded type variables
+    - Type classes
+    - Higher kinded type variables
+    - Higher rank types
