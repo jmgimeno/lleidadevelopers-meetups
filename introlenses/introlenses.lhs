@@ -1,6 +1,6 @@
 % Notes on "Lenses: compositional data access and manipulation" by Simon Peyton-Jones
 % Juan Manuel Gimeno Illa
-% 9 & 16 May 2018
+% 9 & 16 & 23 May 2018
 
 Disclaimer
 ==========
@@ -518,7 +518,7 @@ Traversals
 
 > type Lens' s a = forall f. Functor f => (a -> f a) -> s -> f s
 
-* We have seen that can instantiate `f`{.haskell} in various ways
+* We have seen that we can instantiate `f`{.haskell} in various ways
 
 * But what if we changed `Functor`{.haskell} ?
 
@@ -572,7 +572,7 @@ How does applicative support multi-focus lenses?
 > addr_strs elt_fn (A r c p)
 >   = pure (\r' s' -> A r' c' p) <*> (elt_fn r) <*> (elt_fn c)
 
-* Which usually is written:
+* Which is usually written as:
 
 > addr_strs :: Traversal' Address String
 > addr_strs elt_fn (A r c p)
@@ -688,7 +688,7 @@ Unusually for a library, lenses are not abstract
 
 * The inner workings are more exposed
 
-* But you don't need the lenses library to create lenses (they're only rank-2 functions !!!)
+* __And you don't need the lenses library to create lenses (they're only rank-2 functions !!!)__
 
 I have been lying throughout
 ============================
@@ -735,7 +735,7 @@ Take away thoughts
 
 * A hymn to the power of abstraction
 
-* Lenses, and their variants (notably Traversals), as a composable first-class values, giver remarkable expressive power
+* Lenses, and their variants (notably Traversals), as a composable first-class values, give a remarkable expressive power
 
 * It all rests on Haskell's abstraction facilities:
     - Type classes
