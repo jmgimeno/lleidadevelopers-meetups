@@ -544,7 +544,7 @@ ghci<span class="fu">&gt;</span> view (bitAt <span class="dv">1</span>) <span cl
 <h1>Traversals</h1>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s</code></pre></div>
 <ul>
-<li><p>We have seen that can instantiate <code class="sourceCode haskell">f</code> in various ways</p></li>
+<li><p>We have seen that we can instantiate <code class="sourceCode haskell">f</code> in various ways</p></li>
 <li><p>But what if we changed <code class="sourceCode haskell"><span class="dt">Functor</span></code> ?</p></li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Traversal&#39;</span> s a <span class="fu">=</span> forall f<span class="fu">.</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s</code></pre></div>
@@ -595,7 +595,7 @@ road elt_fn (<span class="dt">A</span> r c p)
 addr_strs elt_fn (<span class="dt">A</span> r c p)
   <span class="fu">=</span> pure (\r&#39; s&#39; <span class="ot">-&gt;</span> <span class="dt">A</span> r&#39; c&#39; p) <span class="fu">&lt;*&gt;</span> (elt_fn r) <span class="fu">&lt;*&gt;</span> (elt_fn c)</code></pre></div>
 <ul>
-<li>Which usually is written:</li>
+<li>Which is usually written as:</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">addr_strs ::</span> <span class="dt">Traversal&#39;</span> <span class="dt">Address</span> <span class="dt">String</span>
 addr_strs elt_fn (<span class="dt">A</span> r c p)
@@ -700,7 +700,7 @@ ln1 <span class="fu">.</span> tr2 <span class="fu">:.</span> <span class="dt">Ta
 <ul>
 <li><p>Lenses and traversals would not compose (or would require lots of different functions to do so)</p></li>
 <li><p>The inner workings are more exposed</p></li>
-<li><p>But you don't need the lenses library to create lenses (they're only rank-2 functions !!!)</p></li>
+<li><p><strong>And you don't need the lenses library to create lenses (they're only rank-2 functions !!!)</strong></p></li>
 </ul>
 </div>
 <div id="i-have-been-lying-throughout" class="slide section level1">
@@ -746,7 +746,7 @@ ln1 <span class="fu">.</span> tr2 <span class="fu">:.</span> <span class="dt">Ta
 <h1>Take away thoughts</h1>
 <ul>
 <li><p>A hymn to the power of abstraction</p></li>
-<li><p>Lenses, and their variants (notably Traversals), as a composable first-class values, giver remarkable expressive power</p></li>
+<li><p>Lenses, and their variants (notably Traversals), as a composable first-class values, give a remarkable expressive power</p></li>
 <li>It all rests on Haskell's abstraction facilities:
 <ul>
 <li>Type classes</li>
