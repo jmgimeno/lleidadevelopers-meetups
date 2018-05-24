@@ -593,13 +593,13 @@ road elt_fn (<span class="dt">A</span> r c p)
 </ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">addr_strs ::</span> <span class="dt">Traversal&#39;</span> <span class="dt">Address</span> <span class="dt">String</span>
 addr_strs elt_fn (<span class="dt">A</span> r c p)
-  <span class="fu">=</span> pure (\r&#39; s&#39; <span class="ot">-&gt;</span> <span class="dt">A</span> r&#39; c&#39; p) <span class="fu">&lt;*&gt;</span> (elt_fn r) <span class="fu">&lt;*&gt;</span> (elt_fn c)</code></pre></div>
+  <span class="fu">=</span> pure (\r&#39; c&#39; <span class="ot">-&gt;</span> <span class="dt">A</span> r&#39; c&#39; p) <span class="fu">&lt;*&gt;</span> (elt_fn r) <span class="fu">&lt;*&gt;</span> (elt_fn c)</code></pre></div>
 <ul>
 <li>Which is usually written as:</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">addr_strs ::</span> <span class="dt">Traversal&#39;</span> <span class="dt">Address</span> <span class="dt">String</span>
 addr_strs elt_fn (<span class="dt">A</span> r c p)
-  <span class="fu">=</span> (\r&#39; s&#39; <span class="ot">-&gt;</span> <span class="dt">A</span> r&#39; c&#39; p) <span class="fu">&lt;$&gt;</span> (elt_fn r) <span class="fu">&lt;*&gt;</span> (elt_fn c)</code></pre></div>
+  <span class="fu">=</span> (\r&#39; c&#39; <span class="ot">-&gt;</span> <span class="dt">A</span> r&#39; c&#39; p) <span class="fu">&lt;$&gt;</span> (elt_fn r) <span class="fu">&lt;*&gt;</span> (elt_fn c)</code></pre></div>
 </div>
 <div id="using-traversals" class="slide section level1">
 <h1>Using Traversals</h1>
@@ -695,8 +695,8 @@ ln1 <span class="fu">.</span> tr2 <span class="fu">:.</span> <span class="dt">Ta
 <ul>
 <li>...and not:</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> <span class="dt">L</span> (forall f<span class="fu">.</span> <span class="dt">Functor</span> f
-                       <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Lens&#39;</span> s a <span class="fu">=</span> <span class="dt">L</span> ( forall f<span class="fu">.</span> <span class="dt">Functor</span> f
+                        <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> f s )</code></pre></div>
 <ul>
 <li><p>Lenses and traversals would not compose (or would require lots of different functions to do so)</p></li>
 <li><p>The inner workings are more exposed</p></li>

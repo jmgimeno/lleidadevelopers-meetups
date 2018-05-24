@@ -570,13 +570,13 @@ How does applicative support multi-focus lenses?
 
 > addr_strs :: Traversal' Address String
 > addr_strs elt_fn (A r c p)
->   = pure (\r' s' -> A r' c' p) <*> (elt_fn r) <*> (elt_fn c)
+>   = pure (\r' c' -> A r' c' p) <*> (elt_fn r) <*> (elt_fn c)
 
 * Which is usually written as:
 
 > addr_strs :: Traversal' Address String
 > addr_strs elt_fn (A r c p)
->   = (\r' s' -> A r' c' p) <$> (elt_fn r) <*> (elt_fn c)
+>   = (\r' c' -> A r' c' p) <$> (elt_fn r) <*> (elt_fn c)
 
 Using Traversals
 ================
@@ -681,8 +681,8 @@ Unusually for a library, lenses are not abstract
 
 * ...and not:
 
-> newtype Lens' s a = L (forall f. Functor f
->                        => (a -> f a) -> s -> f s)
+> newtype Lens' s a = L ( forall f. Functor f
+>                         => (a -> f a) -> s -> f s )
 
 * Lenses and traversals would not compose (or would require lots of different functions to do so)
 
