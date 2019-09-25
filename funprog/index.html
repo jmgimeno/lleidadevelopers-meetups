@@ -264,6 +264,7 @@ r2: String = Hello, World, World
             <li>core.async: channels and goroutines</li>
             <li>React.js: reagent, om, om.next, ...</li>
             <li>Datomic: the database as a value</li>
+            <li>But no static typing</li>
           </ul>
         </section>
 
@@ -303,15 +304,8 @@ def foldMap[A, B](as: List[A], m: Monoid[B])(f: A => B): B =
             <li>Advanced libraries: Scalaz & Cats</li>
             <li>Advanced frameworks: Akka & Play</li>
             <li>Haskell-ish but practical</li>
-            <li>Reactive Manifesto (2.0)
-              <ul>
-                <li>Responsive</li>
-                <li>Resilient</li>
-                <li>Elastic</li>
-                <li>Message-driven</li>
-              </ul>
-            </li>
-
+            <li>But clumsy syntax</li>
+            <li>Scala 2 -> Scala 3</li>
           </ul>
         </section>
 
@@ -356,8 +350,60 @@ sequence (mx:mxs) =  do x  <- mx
             <li>Pattern matching</li>
             <li><a href="https://wiki.haskell.org/Typeclassopedia">Typeclassopedia</a>: Functors, Applicatives, Monads, ...</li>
             <li>The IO Monad !!!</li>
+            <li>Very interesting typesystem</li>
           </ul>
         </section>
+
+</section>
+
+<section>
+
+  <section>
+    <h2>Liquid Haskell</h2>
+    <pre class="stretch"><code class="hljs" class="haskell" data-trim contenteditable>
+{-@ type IncrList a = [a]<{\xi xj -> xi <= xj}> @-}  
+
+split :: [a] -> ([a], [a])
+split (x:y:zs) = (x:xs, y:ys) 
+  where 
+    (xs, ys)   = split zs
+split xs       = (xs, [])
+
+{-@ merge :: (Ord a) => IncrList a 
+                     -> IncrList a 
+                     -> IncrList a 
+  @-}
+
+merge xs []         = xs
+merge [] ys         = ys
+merge (x:xs) (y:ys) 
+  | x <= y          = x : merge xs (y:ys)
+  | otherwise       = y : merge (x:xs) ys
+
+{-@ mergeSort :: (Ord a) => [a] -> IncrList a @-}
+
+mergeSort []  = []
+mergeSort [x] = [x]
+mergeSort xs  = merge (mergeSort ys) (mergeSort zs) 
+  where 
+    (ys, zs)  = split xs
+    </code></pre>
+  </section>
+
+  <section>
+    <h2>Liquid Haskell</h2>
+    <ul>
+      <li>Refinement types: HaskellTypes + Predicates</li>
+      <li>Uses a SMT (Solver Module Theories)</li>
+      <li>So more invariants can be checked at compile time
+        <ul>
+          <li>Guarantee totality</li>
+          <li>Vector access bounds</li>
+          <li>Avoid infinite loops</li>
+          <li>...</li></ul>
+      </li>
+    </ul>
+  </section>
 
 </section>
 
@@ -386,8 +432,8 @@ ins_sort (x :: xs) = let xs_sorted = ins_sort xs in
           <h2>Idris</h2>
           <ul>
             <li>Similar to Haskell but strictly evaluated</li>
-            <li>Dependent types</li>
-            <li>... don't know much more yet ...</li>
+            <li>Dependent types !!!</li>
+            <li>Idris 2 on the making</li>
           </ul>
         </section>
 
@@ -451,17 +497,9 @@ ins_sort (x :: xs) = let xs_sorted = ins_sort xs in
 
         <section>
           <h2>Suggested books</h2>
-          <img  width="240" height="350" src="images/idris.jpg" alt="Type-Driven Development with Idris" />
+          <img  width="240" height="350" src="images/idris.png" alt="Type-Driven Development with Idris" />
           <p>
             <a href="https://www.manning.com/books/type-driven-development-with-idris">Type-Driven Development with Idris</a>
-          </p>
-        </section>
-
-        <section>
-          <h2>Suggested books</h2>
-          <img  width="240" height="350" src="images/frdm.jpg" alt="Functional and Reactive Domain Modeling" />
-          <p>
-            <a href="https://www.manning.com/books/functional-and-reactive-domain-modeling">Functional and Reactive Domain Modeling</a>
           </p>
         </section>
 
